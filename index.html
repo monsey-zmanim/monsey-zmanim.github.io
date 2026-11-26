@@ -35,7 +35,7 @@ h1{margin:0;font-size:22px;text-align:center}
 .err{color:#ffb4b4;text-align:center;padding:12px;font-size:14px}
 .foot{text-align:center;color:#6f829d;font-size:12px;margin-top:18px}
 .cd{background:#1e3a8a;border-radius:16px;padding:12px;margin:12px 0;text-align:center}.cd .lbl{font-size:14px;color:#c7d7ff}.cd .big{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}.cd .det{font-size:13px;color:#c7d7ff}
-.mn{background:#12351f;border-radius:10px;padding:8px 10px;margin:2px 0 8px;font-size:14px;line-height:1.35}.mn:empty{display:none}.mn b{color:#8be0a8}.mn small{display:block;color:#a5c9b2;font-size:12px}.mn .tn{white-space:nowrap;unicode-bidi:isolate}
+.mn{background:#12351f;border-radius:10px;padding:8px 10px;margin:2px 0 8px;font-size:14px;line-height:1.35}.mn:empty{display:none}.mn b{color:#8be0a8}.mn small{display:block;color:#a5c9b2;font-size:12px}.mp{color:inherit;text-decoration:underline dotted}.shx{opacity:.5}.mn .tn{white-space:nowrap;unicode-bidi:isolate}
 .leave{background:#14532d;border-radius:16px;padding:14px;margin:12px 0;text-align:center}
 .leave.late{background:#7f1d1d}
 .leave .big{font-size:38px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
@@ -71,6 +71,8 @@ h1{margin:0;font-size:22px;text-align:center}
  <div class="row">Weeknight tzeis: <select id="tz"></select></div>
  <div class="row">Candle lighting: <input type="number" id="cl" min="0" max="90"> min before shkia</div>
  <div class="row">Havdala (Motzei Shabbos): <input type="number" id="hv" min="0" max="120"> min after shkia</div>
+ <h3>Shuls</h3>
+ <div class="row"><div id="shl"></div><a id="sugg" href="https://wa.me/18456376263?text=Shul+suggestion+for+the+zmanim+app%3A%0AShul+name+and+street+address%3A%0ASchedule+%28or+a+photo+of+it%29%3A%0AValid+until+%28date%29%2C+if+it+is+a+weekly+or+monthly+schedule%3A" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;padding:8px 12px;border-radius:8px;background:#25d366;color:#07210f;font-weight:600;text-decoration:none">Suggest a shul (WhatsApp)</a></div>
  <h3>Leave-by reminders</h3>
  <div class="row">Getting there: <select id="mode"><option value="drive">Driving</option><option value="walk">Walking</option></select></div>
  <div class="row">Extra buffer: <input type="number" id="buf" min="0" max="60"> min</div>
@@ -217,18 +219,23 @@ function minyanList(z,d){
 }
 var MNKEY="";
 /* Add more shuls here: {id,name,lat,lon (optional, enables nearest-first),list:function(z,dayStr)->[{at,cat,loc,note}]} */
-var SHULS=[{id:"18f",name:"18 Forshay",lat:41.13855,lon:-74.08267,list:minyanList}];
+var SHULS=[{id:"18f",name:"18 Forshay",lat:41.13855,lon:-74.08267,addr:"18 Forshay Rd, Monsey, NY 10952",until:null,list:minyanList}];
+/* until: optional "YYYY-MM-DD" last valid day of this shul's schedule; after it the shul stops showing. addr: street address used for the Google Maps link. */
+function shExp(sh,d){return !!(sh.until&&d>sh.until)}
+function mapUrl(sh){return "https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(sh.addr||(sh.name+" Monsey NY"))}
+function mapA(sh,t){return '<a class="mp" href="'+mapUrl(sh)+'" target="_blank" rel="noopener">'+t+'</a>'}
 function shulKm(sh){if(!pos||sh.lat==null||sh.lon==null)return null;return hav(pos.lat,pos.lon,sh.lat,sh.lon)}
 function nextMinyan(){
  var today=ymd(new Date());
  if(CDD!==today||!ZT||ZTD!==today)return null;
  var now=Date.now(),cands=[],tom=0;
  SHULS.forEach(function(sh){
+  if(shExp(sh,today))return;
   var L=sh.list(ZT,today),idx=-1,i;
   for(i=0;i<L.length;i++)if(L[i].at>now){idx=i;break}
   var out,t=0;
   if(idx>=0)out=L.slice(idx);
-  else if(ZTOMORROW){out=sh.list(ZTOMORROW.t,ZTOMORROW.d);t=1}
+  else if(ZTOMORROW&&!shExp(sh,ZTOMORROW.d)){out=sh.list(ZTOMORROW.t,ZTOMORROW.d);t=1}
   if(out&&out.length)cands.push({sh:sh,L:out,t:t,km:shulKm(sh)});
  });
  if(!cands.length)return null;
@@ -236,7 +243,7 @@ function nextMinyan(){
  cands=cands.filter(function(c){return c.L[0].cat===cat&&c.L[0].at<=e+30*60000});
  cands.sort(function(a,b){if(a.km!=null&&b.km!=null&&a.km!==b.km)return a.km-b.km;return a.L[0].at-b.L[0].at});
  var c=cands[0],out=c.L.filter(function(x){return x.cat===cat}).slice(0,3);
- out.forEach(function(x){x.tom=c.t;x.shul=c.sh.name});
+ out.forEach(function(x){x.tom=c.t;x.shul=c.sh.name;x.sref=c.sh});
  return out;
 }
 function zt(id){var k={tefilla:["sofZmanTfilla","d"],plag:["plagHaMincha","d"]}[id];if(!k||!ZT)return null;return new Date(adj(getVal(ZT,k[0],ZTD,id),k[1])).getTime()}
@@ -255,7 +262,7 @@ function renderMinyan(){
  host.innerHTML="";
  if(!n||!n.length)return;
  function nt(x){return x.note?" ("+esc(x.note)+")":""}
- function f(x){return '<span class="tn">'+hm(new Date(x.at))+'</span> &middot; <span class="tn">'+esc(x.shul)+'</span> <span class="tn">('+esc(x.loc)+')</span>'+nt(x)}
+ function f(x){return '<span class="tn">'+hm(new Date(x.at))+'</span> &middot; '+mapA(x.sref,'<span class="tn">'+esc(x.shul)+'</span> <span class="tn">('+esc(x.loc)+')</span>')+nt(x)}
  var first=n[0],rest=n.slice(1,2).map(f).join(" &middot; ");
  host.innerHTML='<b>Next minyan'+(first.tom?" tomorrow":"")+':</b> '+CATN[first.cat]+' &middot; '+f(first)+(first.note==="Vasikin"?'<small>Brochos 30 min / Hodu 20 min before netz</small>':'')+(rest?'<small>then '+rest+'</small>':'');
 }
@@ -331,7 +338,7 @@ function tefillos(){
   if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);list.push({n:"Mincha",at:mat,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
   if(S.e_ma&&T.sunset){var xat;
    if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW)?chatzosHalaila(T,dayStr,ZTOMORROW.t):null;if(CZ){var cz=new Date(adj(CZ,"d")).getTime(),lim=cz-10*60000,cand=[];xat=new Date(cz-S.o_ma*60000);
-    SHULS.forEach(function(sh){sh.list(T,dayStr).forEach(function(m){if((m.cat==="A"||m.cat==="MM")&&m.at<=lim)cand.push({at:m.at,w:sh.name+" ("+m.loc+")",sh:sh})})});
+    SHULS.forEach(function(sh){if(shExp(sh,dayStr))return;sh.list(T,dayStr).forEach(function(m){if((m.cat==="A"||m.cat==="MM")&&m.at<=lim)cand.push({at:m.at,w:sh.name+" ("+m.loc+")",sh:sh})})});
     cand.sort(function(a,b){return a.at-b.at});var R0=xat.getTime(),ok=cand.filter(function(a){return a.at>=R0})[0],pk=null;
     if(ok!==undefined){pk=ok;xat=new Date(ok.at)}else{var bf=cand.filter(function(a){return a.at<R0});if(bf.length){pk=bf[bf.length-1];xat=new Date(pk.at)}}}}
    else{var tz=adj(tzeisOf(T,dayStr),"u");xat=new Date(new Date(tz).getTime()+S.o_ma*60000)}
@@ -363,7 +370,7 @@ function renderLeave(){
  if(!best){box.innerHTML="";box.style.display="none";return}
  var left=Math.round((best.lv-now)/60000),late=left<0;
  var tm=ymd(new Date(best.at))!==ymd(new Date())?" tomorrow":"";
- box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+(best.where?' &middot; '+esc(best.where):'')+'<br>'+best.tr.mi.toFixed(1)+' mi to '+esc(best.sh.name)+', ~'+best.tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
+ box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+(best.where?' &middot; '+esc(best.where):'')+'<br>'+best.tr.mi.toFixed(1)+' mi to '+mapA(best.sh,esc(best.sh.name))+', ~'+best.tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
  var lc=box.querySelector(".leave");if(lc){lc.insertAdjacentHTML("beforeend",'<button id="dvb" style="margin-top:8px">I davened</button>');$("dvb").onclick=function(){disSet(disKey(best));renderLeave()}}
  checkNotify(list);
 }
@@ -382,7 +389,7 @@ function checkNotify(list,lead){
   var key=disKey(x);
   if(!notified[key]&&!isDis(x)&&now>=x.lv&&now<x.at.getTime()){
    notified[key]=1;
-   var ttl="Time to leave for "+x.n,opt={body:x.n+" at "+hm(x.at)+(x.where?" ("+x.where+")":"")+". Leave now to get to "+x.sh.name+".",tag:key,renotify:false,data:{key:key},actions:[{action:"dav",title:"I davened"}]};
+   var ttl="Time to leave for "+x.n,opt={body:x.n+" at "+hm(x.at)+(x.where?" ("+x.where+")":"")+". Leave now to get to "+x.sh.name+".",tag:key,renotify:false,data:{key:key,map:mapUrl(x.sh)},actions:[{action:"dav",title:"I davened"},{action:"map",title:"Directions"}]};
    if("serviceWorker" in navigator&&navigator.serviceWorker.ready){navigator.serviceWorker.ready.then(function(r){return r.showNotification(ttl,opt)}).catch(function(){try{new Notification(ttl,{body:opt.body})}catch(e){}})}
    else{try{new Notification(ttl,{body:opt.body})}catch(e){}}
    try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
@@ -424,6 +431,8 @@ $("gear").onclick=function(){$("set").classList.toggle("open")};
 function shift(n){cur=new Date(cur.getTime()+n*864e5);load()}
 $("pv").onclick=function(){shift(-1)};$("nx").onclick=function(){shift(1)};
 $("td").onclick=function(){cur=new Date();load()};
+(function(){var h="";SHULS.forEach(function(sh){var ex=shExp(sh,ymd(new Date()));h+='<div class="'+(ex?'shx':'')+'" style="margin:4px 0">'+mapA(sh,esc(sh.name))+' <small>'+esc(sh.addr||"")+'<br>'+(ex?'schedule expired '+sh.until:(sh.until?'schedule valid until '+sh.until:'no expiry set'))+'</small></div>'});$("shl").innerHTML=h;
+})();
 buildSettings();load();
 if(S.leave!==false&&(S.e_sh||S.e_mi||S.e_ma))startGeo();
 setInterval(function(){renderLeave()},30000);setInterval(tickCd,1000);tickCd();
