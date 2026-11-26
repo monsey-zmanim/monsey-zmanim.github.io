@@ -288,7 +288,7 @@ function tefillos(){
     cand.sort(function(a,b){return a.at-b.at});var R0=xat.getTime(),ok=cand.filter(function(a){return a.at>=R0})[0],pk=null;
     if(ok!==undefined){pk=ok;xat=new Date(ok.at)}else{var bf=cand.filter(function(a){return a.at<R0});if(bf.length){pk=bf[bf.length-1];xat=new Date(pk.at)}}}}
    else{var tz=adj(tzeisOf(T,dayStr),"u");xat=new Date(new Date(tz).getTime()+S.o_ma*60000)}
-   if(xat)list.push({n:"Maariv",at:xat,where:(typeof pk!=="undefined"&&pk)?pk.w:"",ws:T.plagHaMincha?new Date(adj(T.plagHaMincha,"d")).getTime():xat.getTime()-3*3600000})}
+   if(xat)list.push({n:"Maariv",at:xat,where:(typeof pk!=="undefined"&&pk)?pk.w:"",ws:new Date(adj(tzeisOf(T,dayStr),"u")).getTime()})}
  }
  if(ZTD===today&&ZT)mk(ZT,today);
  else if(ZT&&ZTD===today){}
@@ -315,7 +315,7 @@ function renderLeave(){
  if(!(S.e_sh||S.e_mi||S.e_ma)){box.innerHTML='<div class="lv">'+esc(S.shul.name)+': '+tr.mi.toFixed(1)+' mi, about '+tr.min+' min. Turn on a tefillah in Settings to get a leave-by time.</div>';return}
  var now=Date.now(),lead=tr.min+(+S.buf||0),best=null,list=tefillos();
  list.forEach(function(x){var lv=x.at.getTime()-lead*60000;x.lv=lv;if(x.at.getTime()>now&&now>=x.ws&&!isDis(x)&&(!best||x.at<best.at))best=x});
- if(!best){box.innerHTML='<div class="lv">Nothing to leave for right now. Each reminder appears once its time window opens (mincha from mincha gedola, maariv from plag, shacharis a few hours before).</div>';return}
+ if(!best){box.innerHTML="";box.style.display="none";return}
  var left=Math.round((best.lv-now)/60000),late=left<0;
  var tm=ymd(new Date(best.at))!==ymd(new Date())?" tomorrow":"";
  box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+(best.where?' &middot; '+esc(best.where):'')+'<br>'+tr.mi.toFixed(1)+' mi to '+esc(S.shul.name)+', ~'+tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
