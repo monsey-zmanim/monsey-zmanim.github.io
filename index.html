@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>My Zmanim</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1b2d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Zmanim">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:#0f1b2d;color:#eef2f7;min-height:100vh}
+.w{max-width:480px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom))}
+h1{margin:0;font-size:22px;text-align:center}
+.sub{text-align:center;color:#9fb0c7;font-size:14px;margin:4px 0}
+.heb{text-align:center;font-size:24px;margin:6px 0 2px;direction:rtl}
+.nav{display:flex;gap:8px;margin:14px 0}
+.nav button{flex:1;padding:10px;border:0;border-radius:10px;background:#22344f;color:#eef2f7;font-size:16px}
+.nav button.t{flex:1.4;background:#3b82f6}
+.card{background:#182840;border-radius:14px;padding:4px 14px;margin:12px 0}
+.r{display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid #243a59}
+.r:last-child{border:0}
+.r .n{font-size:16px}.r .n small{display:block;color:#8ea2bd;font-size:12px}
+.r .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.r.now{background:linear-gradient(90deg,#1d4ed8,#1e3a8a);margin:0 -14px;padding:11px 14px;border-radius:10px;border-bottom-color:transparent;box-shadow:0 0 0 1px #60a5fa88}
+.r.now .n small{color:#c7d7ff}.r.now .v{color:#fff}
+.nx{display:none}.r.now .nx{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:#60a5fa;color:#0b1d3a;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}.r.now .nx:after{content:"next"}
+.shab{background:#2b2350}
+.shab h2{margin:12px 0 0;font-size:16px;color:#c9b8ff}
+.hn{white-space:nowrap;direction:rtl;unicode-bidi:isolate}
+.err{color:#ffb4b4;text-align:center;padding:12px;font-size:14px}
+.foot{text-align:center;color:#6f829d;font-size:12px;margin-top:18px}
+.cd{background:#1e3a8a;border-radius:16px;padding:12px;margin:12px 0;text-align:center}.cd .lbl{font-size:14px;color:#c7d7ff}.cd .big{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}.cd .det{font-size:13px;color:#c7d7ff}
+.mn{background:#12351f;border-radius:10px;padding:8px 10px;margin:2px 0 8px;font-size:14px;line-height:1.35}.mn:empty{display:none}.mn b{color:#8be0a8}.mn small{display:block;color:#a5c9b2;font-size:12px}.mn .tn{white-space:nowrap;unicode-bidi:isolate}
+.leave{background:#14532d;border-radius:16px;padding:14px;margin:12px 0;text-align:center}
+.leave.late{background:#7f1d1d}
+.leave .big{font-size:38px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.leave .lbl{font-size:14px;color:#c8f0d6}
+.leave .det{font-size:13px;margin-top:4px;color:#d9f5e3}
+.leave.late .lbl,.leave.late .det{color:#ffd3d3}
+.lv{background:#182840;border-radius:14px;padding:12px 14px;margin:12px 0;font-size:14px;color:#9fb0c7;text-align:center}
+.lv button,.set button,.btn{padding:9px 12px;border:0;border-radius:9px;background:#3b82f6;color:#fff;font-size:14px}
+.set{background:#182840;border-radius:14px;padding:12px 14px;margin:12px 0;display:none}
+.set.open{display:block}
+.set h3{margin:14px 0 6px;font-size:14px;color:#9fb0c7;text-transform:uppercase;letter-spacing:.5px}
+.set h3:first-child{margin-top:0}
+.set label{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:15px}
+.set input[type=checkbox]{width:20px;height:20px}
+.set select,.set input[type=text],.set input[type=time],.set input[type=number]{background:#0f1b2d;color:#eef2f7;border:1px solid #2f4a70;border-radius:8px;padding:8px;font-size:15px}
+.set input[type=text]{width:100%}
+.set input[type=number]{width:70px}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap;font-size:15px}
+.res div{padding:8px;border-bottom:1px solid #243a59;font-size:13px}
+.gear{float:right;background:#22344f;border:0;color:#eef2f7;border-radius:10px;padding:6px 10px;font-size:15px}
+</style></head><body><div class="w">
+<button class="gear" id="gear">Settings</button>
+<h1>My Zmanim</h1>
+<div class="sub" id="loc">Monsey, NY</div>
+<div class="heb" id="hd"></div>
+<div class="sub" id="gd"></div>
+
+<div class="set" id="set">
+ <h3>Show these zmanim</h3><div id="zlist"></div>
+ <h3>Opinions</h3><label><input type="checkbox" id="strict"> Strict rounding (deadlines down, starts up)</label><div class="row" style="font-size:12px;color:#8ea2bd">Off = nearest minute.</div><div class="row" style="font-size:12px;color:#8ea2bd">Weeknight tzeis uses the setting below. Motzei Shabbos and Yom Kippur always use 72 min after shkia.</div>
+ <div class="row">Weeknight tzeis: <select id="tz"><option value="tzeit85deg">8.5&deg; below horizon</option><option value="tzeit7083deg">7.083&deg; below horizon</option></select></div>
+ <div class="row">Candle lighting: <input type="number" id="cl" min="0" max="90"> min before shkia</div>
+ <div class="row">Havdala (Motzei Shabbos): <input type="number" id="hv" min="0" max="120"> min after shkia</div>
+ <h3>My shul</h3>
+ <div class="row" id="shulcur"></div>
+ <div class="row"><input type="text" id="q" placeholder="Shul name or address"></div>
+ <div class="row"><button id="sq">Search</button></div>
+ <div class="res" id="res"></div>
+ <h3>Leave-by reminders</h3>
+ <div class="row">Getting there: <select id="mode"><option value="drive">Driving</option><option value="walk">Walking</option></select></div>
+ <div class="row">Extra buffer: <input type="number" id="buf" min="0" max="60"> min</div>
+ <label><input type="checkbox" id="e_sh"> Shacharis at <input type="time" id="t_sh"></label>
+ <label><input type="checkbox" id="e_mi"> Mincha <input type="number" id="o_mi" min="0" max="90"> min before shkia</label>
+ <label><input type="checkbox" id="e_ma"> Maariv <input type="number" id="o_ma" min="0" max="90"> min after tzeis</label>
+ <div class="row"><button id="notif">Turn on notifications</button><span id="nstat" style="font-size:12px;color:#9fb0c7"></span></div>
+ <div class="row" style="font-size:12px;color:#8ea2bd">Reminders only fire while this page is open on your phone. The leave-by time above always shows.</div>
+</div>
+
+<div id="cdBox"></div>
+<div class="mn" id="mnTop"></div>
+<div id="leaveBox"></div>
+<div class="nav"><button id="pv">&larr;</button><button class="t" id="td">Today</button><button id="nx">&rarr;</button></div>
+<div id="out"><div class="err" style="color:#9fb0c7">Loading...</div></div>
+<div class="foot" id="mfoot">Minyanim: 18 Forshay / Ohr Chaim schedule from 18forshay.com/zmanim, as of Nov 25, 2026 (Winter 2026). Times they mark with * move with shkia and follow today's shkia here; plag minyanim follow today's plag. Check the screens at the shul for changes.</div>
+<div class="foot">Times from Hebcal for Monsey, NY. Sof zman shema/tefillah per GRA unless labeled. Strict rounding: deadlines round down, starts round up (switch in Settings). Candle lighting 15 min before shkia. Tzeis 8.5&deg; on weeknights, 72 min after shkia on Motzei Shabbos and Yom Kippur. Check with your rav for your minhag.</div>
+</div>
+<script>
+var LAT=41.1112,LON=-74.0682,TZ="America/New_York";
+var ALL=[
+ ["alos","Alos Hashachar","16.1\u00b0","alotHaShachar",1,"u"],
+ ["misheyakir","Misheyakir","tallis & tefillin","misheyakir",1,"u"],
+ ["netz","Netz Hachama","sunrise","sunrise",1,"u"],
+ ["shemaMGA","Sof Zman Shema","MGA","sofZmanShmaMGA",0,"d"],
+ ["shema","Sof Zman Shema","GRA","sofZmanShma",1,"d"],
+ ["tefillaMGA","Sof Zman Tefillah","MGA","sofZmanTfillaMGA",0,"d"],
+ ["tefilla","Sof Zman Tefillah","GRA","sofZmanTfilla",1,"d"],
+ ["chatzos","Chatzos","midday","chatzot",1,"d"],
+ ["mgedola","Mincha Gedola","","minchaGedola",1,"u"],
+ ["mketana","Mincha Ketana","","minchaKetana",0,"d"],
+ ["plag","Plag Hamincha","","plagHaMincha",0,"d"],
+ ["shkia","Shkia","sunset","sunset",1,"d"],
+ ["tzeis","Tzeis Hakochavim","","TZEIS",1,"u"],
+ ["chatzosNight","Chatzos Halaila","","chatzotNight",0,"d"]
+];
+var DEF={show:{},tz:"tzeit85deg",cl:15,hv:72,strict:true,shul:null,mode:"drive",buf:5,e_sh:false,t_sh:"07:00",e_mi:true,o_mi:20,e_ma:false,o_ma:0};
+ALL.forEach(function(z){DEF.show[z[0]]=!!z[4]});
+var S;
+try{S=JSON.parse(localStorage.getItem("zm_settings2")||"null")}catch(e){S=null}
+S=S||{};for(var k in DEF){if(S[k]===undefined)S[k]=JSON.parse(JSON.stringify(DEF[k]))}
+for(var k2 in DEF.show){if(S.show[k2]===undefined)S.show[k2]=DEF.show[k2]}
+function save(){try{localStorage.setItem("zm_settings2",JSON.stringify(S))}catch(e){}}
+var $=function(i){return document.getElementById(i)};
+var cur=new Date(),pos=null,posErr="",ZT=null,ZTOMORROW=null,notified={};
+function ymd(d){return new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(d)}
+function t(s){return s?new Date(s).toLocaleTimeString("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"}):"-"}
+function row(n,v,sub,cls,ts){return '<div class="r '+(cls||'')+'"'+(ts?' data-ts="'+ts+'"':'')+'><div class="n">'+n+(ts?'<small>'+(sub||'')+'<span class="nx"></span></small>':(sub?'<small>'+sub+'</small>':''))+'</div><div class="v">'+t(v)+'</div></div>'}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var YK={};
+function adj(iso,dir){if(!iso)return iso;var ms=new Date(iso).getTime(),m=60000,r;
+ if(!S.strict)r=Math.round(ms/m)*m;else r=(dir==="u")?Math.ceil(ms/m)*m:Math.floor(ms/m)*m;
+ return new Date(r).toISOString()}
+function is72(dayStr){return new Date(dayStr+"T12:00:00Z").getUTCDay()===6||!!YK[dayStr]}
+function tzeisOf(z,dayStr){
+ if(is72(dayStr)){return new Date(new Date(z.sunset).getTime()+72*60000).toISOString()}
+ return z[S.tz==="tzeit7083deg"?"tzeit7083deg":"tzeit85deg"];
+}
+function tzeisLabel(dayStr){if(is72(dayStr))return YK[dayStr]?"72 min (Yom Kippur)":"72 min (Motzei Shabbos)";return S.tz==="tzeit7083deg"?"7.083\u00b0":"8.5\u00b0"}
+function getVal(z,key,d){return key==="TZEIS"?tzeisOf(z,d):z[key]}
+function loc(){return S.shul?S.shul:{lat:LAT,lon:LON}}
+
+/* ---------- zmanim ---------- */
+var CDD="",CDI=[];
+function itemsFor(z,d,zn){var items=[];ALL.forEach(function(it){if(S.show[it[0]]){if(it[3]==="chatzotNight"){if(!zn)return;items.push([it[1],adj(zn.chatzotNight,it[5]),"tonight",it[0]]);return}var sub=it[2];if(it[3]==="TZEIS")sub=tzeisLabel(d);items.push([it[1],adj(getVal(z,it[3],d),it[5]),sub,it[0]])}});return items}
+function pad(n){return n<10?"0"+n:""+n}
+function tickCd(){
+ var rs=document.querySelectorAll(".r[data-ts]"),nxr=null,nw=Date.now(),ii;
+ if(CDD===ymd(new Date())){for(ii=0;ii<rs.length;ii++){if(+rs[ii].getAttribute("data-ts")>nw){nxr=rs[ii];break}}}
+ for(ii=0;ii<rs.length;ii++){var on=rs[ii]===nxr;if(rs[ii].classList.contains("now")!==on)rs[ii].classList.toggle("now",on)}
+ var mk=Math.floor(Date.now()/30000);if(mk!==MNKEY){MNKEY=mk;renderMinyan()}
+ var box=$("cdBox"),now=Date.now(),today=ymd(new Date());
+ if(CDD!==today||!CDI.length){box.innerHTML="";return}
+ var nx=null,tom="";
+ for(var i=0;i<CDI.length;i++){if(new Date(CDI[i][1]).getTime()>now){nx=CDI[i];break}}
+ if(!nx&&ZTOMORROW){var ti=itemsFor(ZTOMORROW.t,ZTOMORROW.d);if(ti.length){nx=ti[0];tom=" tomorrow"}}
+ if(!nx){box.innerHTML="";return}
+ var s=Math.max(0,Math.floor((new Date(nx[1]).getTime()-now)/1000)),hh=Math.floor(s/3600),mm=Math.floor(s%3600/60),ss=s%60;
+ box.innerHTML='<div class="cd"><div class="lbl">Next: '+nx[0]+(nx[2]?' ('+nx[2]+')':'')+tom+'</div><div class="big">'+hh+':'+pad(mm)+':'+pad(ss)+'</div><div class="det">at '+t(nx[1])+'</div></div>';
+}
+
+var MYD=[["S",375,"Tent א","",0,"Hodu"],["S",390,"Tent ג","",0,""],["S",405,"Tent ד","",0,""],["S",420,"Tent א","",0,""],["S",435,"Tent ב","",0,""],["S",450,"Tent ג","",0,""],["S",465,"Tent ד","",0,""],["S",480,"Tent א","",0,""],["S",495,"Tent ב","",0,""],["S",510,"Tent ג","",0,""],["S",525,"Tent ד","",0,""],["S",540,"Tent א","",0,""],["S",555,"Tent ב","",0,""],["S",570,"Tent ג","",0,"Sephardi"],["S",585,"Tent ד","",0,""],["S",600,"Tent א","",0,""],["S",615,"Tent ב","",0,""],["S",630,"Tent ג","",0,""],["S",645,"Tent ד","",0,""],["S",660,"Tent א","",0,""],["S",675,"Tent ב","",0,""],["S",690,"Tent ג","",0,""],["M",750,"18 Main","",0,""],["M",765,"18 Main","",0,""],["M",780,"18 Main","",0,""],["M",795,"18 Main","",0,""],["M",810,"18 Main","",0,""],["M",825,"18 Main","",0,""],["M",840,"18 Main","",0,""],["M",855,"18 Main","",0,""],["M",870,"18 Main","",0,""],["M",885,"18 Main","",0,""],["M",900,"18 Main","",0,""],["M",915,"18 Main","",0,""],["M",930,"18 Main","",0,""],["M",945,"18 Main","",0,""],["M",960,"Tent א","",0,""],["M",965,"Tent ב one","",0,""],["M",970,"Tent ב two","",0,""],["M",975,"Tent ג","",0,""],["M",980,"Tent ה","",0,""],["M",985,"Tent ד","",0,""],["M",990,"Tent א","",0,""],["M",995,"Tent ב one","",0,""],["M",1000,"Tent ב two","",0,""],["M",1005,"Tent ג","",0,""],["M",1010,"Tent ה","",0,""],["M",1015,"Tent ד","",0,""],["M",1020,"Tent א","",0,""],["M",1025,"Tent ב one","",0,""],["M",1030,"Tent ב two","",0,""],["M",1035,"Tent ג","",0,""],["M",1040,"Tent ה","",0,""],["M",1045,"Tent ד","",0,""],["M",1050,"Tent א","s",0,""],["M",1055,"Tent ב one","s",0,""],["M",1060,"Tent ב two","s",0,""],["M",1065,"Tent ג","s",0,""],["M",1070,"Tent ה","s",0,""],["M",1075,"Tent ד","s",0,""],["MM",980,"Tent ה","s",0,""],["MM",985,"Tent ד","s",0,""],["MM",990,"Tent א","s",0,""],["MM",995,"Tent ב one","s",0,""],["MM",1000,"Tent ב two","s",0,""],["MM",1005,"Tent ג","s",0,""],["MM",1010,"Tent ה","",0,""],["MM",1015,"Tent ד","",0,""],["MM",1020,"Tent א","",0,""],["MM",1025,"Tent ב one","",0,""],["MM",1030,"Tent ב two","",0,""],["MM",1035,"Tent ג","",0,""],["MM",1040,"Tent ה","",0,""],["MM",1045,"Tent ד","",0,""],["MM",1050,"Tent א","",0,""],["MM",1055,"Tent ב one","",0,""],["MM",1060,"Tent ב two","",0,""],["MM",1065,"Tent ג","",0,""],["A",990,"Tent ה","s",0,""],["A",995,"Tent ד","s",0,""],["A",1000,"Tent א","s",0,""],["A",1005,"Tent ב one","s",0,""],["A",1010,"Tent ב two","s",0,""],["A",1015,"Tent ג","s",0,""],["A",1020,"Tent ה","",0,""],["A",1025,"Tent ד","",0,""],["A",1030,"Tent א","",0,""],["A",1035,"Tent ב one","",0,""],["A",1040,"Tent ב two","",0,""],["A",1045,"Tent ג","",0,""],["A",1050,"Tent ה","",0,""],["A",1055,"Tent ד","",0,""],["A",1060,"Tent א","",0,""],["A",1065,"Tent ב one","",0,""],["A",1070,"Tent ב two","",0,""],["A",1075,"Tent ג","",0,""],["A",1080,"Tent א","",0,""],["A",1090,"Tent ב one","",0,""],["A",1100,"Tent א","",0,""],["A",1110,"Tent ב one","",0,""],["A",1120,"Tent א","",0,""],["A",1130,"Tent ב one","",0,""],["A",1140,"Tent א","",0,""],["A",1150,"Tent ב two","",0,""],["A",1160,"Tent א","",0,""],["A",1170,"Tent ב one","",0,""],["A",1180,"Tent א","",0,""],["A",1190,"Tent ב one","",0,""],["A",1200,"Tent א","",0,""],["A",1210,"Tent ב one","",0,""],["A",1220,"Tent א","",0,""],["A",1230,"Tent ב one","",0,""],["A",1240,"Tent א","",0,""],["A",1250,"Tent ב one","",0,""],["A",1260,"Tent א","",0,""],["A",1270,"Tent ב one","",0,""],["A",1280,"Tent א","",0,""],["A",1290,"Tent ב one","",0,""],["A",1300,"Tent א","",0,""],["A",1305,"18 Main","",0,""],["A",1310,"Tent ב one","",0,""],["A",1320,"Tent א","",0,""],["A",1330,"Tent ב one","",0,""],["A",1340,"Tent א","",0,""],["A",1350,"Tent ב one","",0,""],["A",1360,"Tent א","",0,""],["A",1370,"Tent ב one","",0,""],["A",1380,"18 Main","",0,""],["A",1395,"18 Main","",0,""],["A",1410,"18 Main","",0,""],["A",1425,"18 Main","",0,""],["A",1440,"18 Main","",0,""],["A",1455,"18 Main","",0,""],["A",1470,"18 Main","",0,""],["A",1485,"18 Main","",0,""],["A",1500,"18 Main","",0,""],["A",1515,"18 Main","",0,""],["A",1530,"18 Main","",0,""],["A",1545,"18 Main","",0,""],["A",1560,"18 Main","",0,""],["A",1590,"18 Main","",0,""],["A",1620,"18 Main","",0,""],["MM",0,"Tent א","p",-12,""],["A",0,"Tent א","p",0,""]];
+var CATN={S:"Shacharis",M:"Mincha",MM:"Mincha + Maariv",A:"Maariv"};
+function minyanList(z,d){
+ var L=[],ss=new Date(adj(z.sunset,"d")).getTime(),pl=new Date(adj(z.plagHaMincha,"d")).getTime(),nz=new Date(adj(z.sunrise,"u")).getTime();
+ var shk=ss-nyDate(d,16,30).getTime();
+ L.push({at:nz-20*60000,cat:"S",loc:"20 Forshay Upstairs",note:"Vasikin"});
+ L.push({at:nz-20*60000,cat:"S",loc:"18 Main (Sephardi)",note:"Vasikin"});
+ MYD.forEach(function(e){
+  var at;
+  if(e[3]==="p")at=pl+e[4]*60000;
+  else{var m=e[1],base=nyDate(d,Math.floor(m/60)%24,m%60).getTime();if(m>=1440)base+=864e5;at=base+(e[3]==="s"?shk:0)}
+  L.push({at:at,cat:e[0],loc:e[2],note:e[5]});
+ });
+ L.sort(function(a,b){return a.at-b.at});
+ return L;
+}
+var MNKEY="";
+function nextMinyan(){
+ var today=ymd(new Date());
+ if(CDD!==today||!ZT||ZTD!==today)return null;
+ var L=minyanList(ZT,today),now=Date.now(),idx=-1,i;
+ for(i=0;i<L.length;i++)if(L[i].at>now){idx=i;break}
+ var out;
+ if(idx>=0)out=L.slice(idx,idx+3);
+ else if(ZTOMORROW){var T=minyanList(ZTOMORROW.t,ZTOMORROW.d);out=T.slice(0,3);out.forEach(function(x){x.tom=1})}
+ return out;
+}
+function zt(id){var k={tefilla:["sofZmanTfilla","d"],tefillaMGA:["sofZmanTfillaMGA","d"],plag:["plagHaMincha","d"]}[id];if(!k||!ZT)return null;return new Date(adj(ZT[k[0]],k[1])).getTime()}
+function pickAnchor(cat,now){
+ var chain,x;
+ if(cat==="S"){x=zt("tefilla")||zt("tefillaMGA");
+  chain=(x&&now<x)?["tefilla","tefillaMGA","shema","shemaMGA","netz","chatzos","mgedola"]:["chatzos","mgedola","tefilla","tefillaMGA","netz","shema"];}
+ else if(cat==="A"){chain=["tzeis","shkia","chatzosNight","plag"];}
+ else{x=zt("plag");
+  chain=(x&&now<x)?["plag","mketana","mgedola","shkia","chatzos"]:["shkia","plag","mketana","mgedola","tzeis"];}
+ for(var i=0;i<chain.length;i++)if(S.show[chain[i]])return chain[i];
+ return "top";
+}
+function renderMinyan(){
+ var els=document.querySelectorAll(".mn[data-a]"),i;
+ var n=nextMinyan();
+ for(i=0;i<els.length;i++)els[i].innerHTML="";
+ $("mnTop").innerHTML="";
+ if(!n||!n.length)return;
+ var a=pickAnchor(n[0].cat,Date.now()),host=a==="top"?$("mnTop"):document.querySelector('.mn[data-a="'+a+'"]');
+ if(!host)host=$("mnTop");
+ function nt(x){return x.note?" ("+esc(x.note)+")":""}
+ function f(x){return '<span class="tn">'+hm(new Date(x.at))+'</span> <span class="tn">'+esc(x.loc)+'</span>'+nt(x)}
+ var first=n[0],rest=n.slice(1).map(function(x){return '<span class="tn">'+hm(new Date(x.at))+'</span> <span class="tn">'+esc(x.loc)+'</span>'+nt(x)}).join(" &middot; ");
+ host.innerHTML='<b>Next minyan'+(first.tom?" tomorrow":"")+':</b> '+CATN[first.cat]+' &middot; '+f(first)+(first.note==="Vasikin"?'<small>Brochos 30 min / Hodu 20 min before netz</small>':'')+(rest?'<small>then '+rest+'</small>':'');
+
+}
+function load(){
+ var d=ymd(cur),isToday=d===ymd(new Date());
+ var out=$("out");out.innerHTML='<div class="err" style="color:#9fb0c7">Loading...</div>';
+ var dd=new Date(d+"T12:00:00");
+ $("gd").textContent=dd.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+ var base="https://www.hebcal.com/",q="latitude="+LAT+"&longitude="+LON+"&tzid="+TZ,p=d.split("-");
+ Promise.all([
+  fetch(base+"zmanim?cfg=json&sec=1&"+q+"&date="+d).then(function(r){return r.json()}),
+  fetch(base+"converter?cfg=json&g2h=1&strict=1&date="+d).then(function(r){return r.json()}),
+  fetch(base+"shabbat?cfg=json&M=on&b="+S.cl+"&m="+S.hv+"&"+q+"&gy="+p[0]+"&gm="+p[1]+"&gd="+p[2]).then(function(r){return r.json()}),
+  fetch(base+"zmanim?cfg=json&sec=1&"+q+"&date="+ymd(new Date(dd.getTime()+864e5))).then(function(r){return r.json()})
+ ]).then(function(a){
+  var z=a[0].times,c=a[1],s=a[2];if((c.events||[]).some(function(e){return /Yom Kippur/.test(e)&&!/Erev/.test(e)}))YK[d]=1;
+  ZT=z;ZTD=d;
+  $("hd").textContent=c.hebrew||"";
+  var items=itemsFor(z,d,a[3].times);CDD=d;CDI=items;
+  var nowT=Date.now(),nextI=-1;
+  if(isToday)for(var i=0;i<items.length;i++){if(new Date(items[i][1]).getTime()>nowT){nextI=i;break}}
+  var h='<div class="card">';
+  if(!items.length)h+='<div class="err">No zmanim selected. Tap Settings.</div>';
+  items.forEach(function(it,i){h+=row(it[0],it[1],it[2]||"","",new Date(it[1]).getTime())+'<div class="mn" data-a="'+it[3]+'"></div>'});
+  h+='</div>';
+  var cl,hv,par;
+  (s.items||[]).forEach(function(it){if(it.category==="candles")cl=it;if(it.category==="havdalah")hv=it;if(it.category==="parashat")par=it});
+  function sunsetOn(dt){return fetch(base+"zmanim?cfg=json&sec=1&"+q+"&date="+dt.slice(0,10)).then(function(r){return r.json()}).then(function(j){return new Date(j.times.sunset).getTime()})}
+  var pre=Promise.all([cl?sunsetOn(cl.date).then(function(ss){cl={date:adj(new Date(ss-S.cl*60000).toISOString(),"d")}}).catch(function(){}):0,hv?sunsetOn(hv.date).then(function(ss){hv={date:adj(new Date(ss+S.hv*60000).toISOString(),"u")}}).catch(function(){}):0]);
+  return pre.then(function(){
+  var dow=new Date(d+"T12:00:00Z").getUTCDay(),sh="";
+  if(dow===6)cl=null;
+  if(cl||hv){
+   sh+='<div class="card shab"><h2>Shabbos'+(par?' - '+esc(par.title.replace("Parashat ","Parshas "))+(par.hebrew?' &middot; <span class="hn">'+esc(par.hebrew)+'</span>':''):'')+'</h2>';
+   if(cl)sh+=row("Candle lighting",cl.date,new Date(cl.date).toLocaleDateString("en-US",{timeZone:TZ,weekday:"long"}));
+   if(hv)sh+=row("Havdala",hv.date,new Date(hv.date).toLocaleDateString("en-US",{timeZone:TZ,weekday:"long"}));
+   sh+='</div>';
+  }
+  h=(dow===5||dow===6)?sh+h:h+sh;
+  out.innerHTML=h;
+  loadTomorrow();renderLeave();renderMinyan();
+  })
+ }).catch(function(){out.innerHTML='<div class="err">Could not load times. Check your connection and refresh.</div>'});
+}
+var ZTD="";
+function loadTomorrow(){
+ var tm=ymd(new Date(Date.now()+864e5));
+ if(ZTOMORROW&&ZTOMORROW.d===tm)return;
+ fetch("https://www.hebcal.com/zmanim?cfg=json&sec=1&latitude="+LAT+"&longitude="+LON+"&tzid="+TZ+"&date="+tm).then(function(r){return r.json()}).then(function(j){ZTOMORROW={d:tm,t:j.times};renderLeave();renderMinyan()}).catch(function(){});
+}
+
+/* ---------- location / leave-by ---------- */
+function hav(a,b,c,d){var R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)*Math.sin(y/2);return 2*R*Math.asin(Math.sqrt(h))}
+function travelMin(){
+ if(!pos||!S.shul)return null;
+ var km=hav(pos.lat,pos.lon,S.shul.lat,S.shul.lon);
+ var road=km*1.35,speed=S.mode==="walk"?4.8:(road<3?25:38);
+ return{km:km,mi:km*0.621371,min:Math.max(1,Math.round(road/speed*60))};
+}
+function hm(d){return d.toLocaleTimeString("en-US",{timeZone:TZ,hour:"numeric",minute:"2-digit"})}
+function tefillos(){
+ var list=[];
+ var today=ymd(new Date());
+ function mk(T,dayStr){
+  if(!T)return;
+  if(S.e_sh){var p=S.t_sh.split(":"),b=new Date(dayStr+"T"+S.t_sh+":00");/* local wall clock in NY: build via offset */list.push({n:"Shacharis",at:nyDate(dayStr,p[0],p[1])})}
+  if(S.e_mi&&T.sunset)list.push({n:"Mincha",at:new Date(new Date(adj(T.sunset,"d")).getTime()-S.o_mi*60000)});
+  if(S.e_ma&&T.sunset){var tz=adj(tzeisOf(T,dayStr),"u");list.push({n:"Maariv",at:new Date(new Date(tz).getTime()+S.o_ma*60000)})}
+ }
+ if(ZTD===today&&ZT)mk(ZT,today);
+ else if(ZT&&ZTD===today){}
+ if(ZTOMORROW)mk(ZTOMORROW.t,ZTOMORROW.d);
+ return list;
+}
+function nyDate(dayStr,h,m){
+ /* find the UTC instant whose New York wall time is dayStr h:m */
+ var guess=Date.UTC(+dayStr.slice(0,4),+dayStr.slice(5,7)-1,+dayStr.slice(8,10),+h,+m);
+ for(var i=0;i<2;i++){
+  var f=new Intl.DateTimeFormat("en-US",{timeZone:TZ,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).formatToParts(new Date(guess)),o={};
+  f.forEach(function(x){o[x.type]=x.value});
+  var shown=Date.UTC(+o.year,+o.month-1,+o.day,+o.hour,+o.minute);
+  guess+= (Date.UTC(+dayStr.slice(0,4),+dayStr.slice(5,7)-1,+dayStr.slice(8,10),+h,+m)-shown);
+ }
+ return new Date(guess);
+}
+function renderLeave(){
+ var box=$("leaveBox");
+ if(!S.shul){box.innerHTML='<div class="lv">Pick your shul in Settings to get leave-by reminders.</div>';return}
+ if(!pos){box.innerHTML='<div class="lv">Shul: '+esc(S.shul.name)+'<br>'+(posErr?esc(posErr)+'<br>':'Waiting for your location...<br>')+'<button id="gl">Allow location</button></div>';$("gl").onclick=startGeo;return}
+ var tr=travelMin();
+ if(!(S.e_sh||S.e_mi||S.e_ma)){box.innerHTML='<div class="lv">'+esc(S.shul.name)+': '+tr.mi.toFixed(1)+' mi, about '+tr.min+' min. Turn on a tefillah in Settings to get a leave-by time.</div>';return}
+ var now=Date.now(),lead=tr.min+(+S.buf||0),best=null,list=tefillos();
+ list.forEach(function(x){var lv=x.at.getTime()-lead*60000;x.lv=lv;if(x.at.getTime()>now&&(!best||x.at<best.at))best=x});
+ if(!best){box.innerHTML='<div class="lv">No upcoming tefillah to show. Check Settings.</div>';return}
+ var left=Math.round((best.lv-now)/60000),late=left<0;
+ var tm=ymd(new Date(best.at))!==ymd(new Date())?" tomorrow":"";
+ box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+'<br>'+tr.mi.toFixed(1)+' mi to '+esc(S.shul.name)+', ~'+tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
+ checkNotify(list,lead);
+}
+function checkNotify(list,lead){
+ if(!("Notification" in window)||Notification.permission!=="granted")return;
+ var now=Date.now();
+ list.forEach(function(x){
+  var key=x.n+"|"+x.at.toISOString();
+  if(!notified[key]&&now>=x.lv&&now<x.at.getTime()){
+   notified[key]=1;
+   try{new Notification("Time to leave for "+x.n,{body:x.n+" at "+hm(x.at)+". Leave now to get to "+S.shul.name+"."});}catch(e){}
+   try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
+  }
+ });
+}
+function startGeo(){
+ if(!navigator.geolocation){posErr="Location is not available in this browser.";renderLeave();return}
+ posErr="";
+ navigator.geolocation.watchPosition(function(p){pos={lat:p.coords.latitude,lon:p.coords.longitude};posErr="";renderLeave()},function(e){posErr="Location blocked or unavailable ("+e.message+"). Allow location for this page.";renderLeave()},{enableHighAccuracy:false,maximumAge:60000,timeout:20000});
+}
+
+/* ---------- settings UI ---------- */
+function buildSettings(){
+ var h="";ALL.forEach(function(z){h+='<label><input type="checkbox" data-z="'+z[0]+'"'+(S.show[z[0]]?" checked":"")+'> '+z[1]+(z[2]?' ('+z[2]+')':'')+'</label>'});
+ $("zlist").innerHTML=h;
+ Array.prototype.forEach.call(document.querySelectorAll("[data-z]"),function(c){c.onchange=function(){S.show[c.getAttribute("data-z")]=c.checked;save();load()}});
+ $("strict").checked=!!S.strict;$("strict").onchange=function(){S.strict=this.checked;save();load()};
+ $("tz").value=S.tz;$("tz").onchange=function(){S.tz=this.value;save();load()};
+ [["cl","cl"],["hv","hv"],["buf","buf"],["o_mi","o_mi"],["o_ma","o_ma"]].forEach(function(p){var e=$(p[0]);e.value=S[p[1]];e.onchange=function(){S[p[1]]=Math.max(0,parseInt(this.value,10)||0);save();load()}});
+ $("mode").value=S.mode;$("mode").onchange=function(){S.mode=this.value;save();renderLeave()};
+ $("t_sh").value=S.t_sh;$("t_sh").onchange=function(){S.t_sh=this.value||"07:00";save();renderLeave()};
+ ["e_sh","e_mi","e_ma"].forEach(function(k){var e=$(k);e.checked=!!S[k];e.onchange=function(){S[k]=this.checked;save();renderLeave()}});
+ showShul();nstat();
+}
+function showShul(){$("shulcur").innerHTML=S.shul?'Current: <b>'+esc(S.shul.name)+'</b>':'No shul chosen yet.'}
+function nstat(){$("nstat").textContent=("Notification" in window)?("Status: "+Notification.permission):"Not supported on this browser"}
+$("notif").onclick=function(){
+ if(!("Notification" in window)){alert("This browser does not support page notifications. The leave-by time still shows on the page.");return}
+ Notification.requestPermission().then(nstat).catch(nstat);
+};
+$("sq").onclick=function(){
+ var q=$("q").value.trim();if(!q)return;
+ $("res").innerHTML='<div>Searching...</div>';
+ fetch("https://nominatim.openstreetmap.org/search?format=json&limit=6&countrycodes=us&viewbox=-74.4,41.4,-73.8,40.9&q="+encodeURIComponent(q)).then(function(r){return r.json()}).then(function(a){
+  if(!a.length){$("res").innerHTML='<div>No results. Try the street address.</div>';return}
+  $("res").innerHTML=a.map(function(x,i){return '<div><a href="#" data-i="'+i+'" style="color:#7db3ff;text-decoration:none">'+esc(x.display_name)+'</a></div>'}).join("");
+  Array.prototype.forEach.call(document.querySelectorAll("[data-i]"),function(l){l.onclick=function(e){e.preventDefault();var x=a[+l.getAttribute("data-i")];S.shul={name:(q.length<60?q:x.display_name.split(",")[0]),addr:x.display_name,lat:parseFloat(x.lat),lon:parseFloat(x.lon)};save();$("res").innerHTML="";showShul();startGeo();renderLeave()}});
+ }).catch(function(){$("res").innerHTML='<div>Search failed. Check your connection.</div>'});
+};
+$("gear").onclick=function(){$("set").classList.toggle("open")};
+function shift(n){cur=new Date(cur.getTime()+n*864e5);load()}
+$("pv").onclick=function(){shift(-1)};$("nx").onclick=function(){shift(1)};
+$("td").onclick=function(){cur=new Date();load()};
+buildSettings();load();
+if(S.shul)startGeo();
+setInterval(function(){renderLeave()},30000);setInterval(tickCd,1000);tickCd();
+document.addEventListener("visibilitychange",function(){if(!document.hidden){if(ymd(cur)!==ymd(new Date())&&ZTD&&ZTD!==ymd(cur)){}renderLeave()}});
+if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(function(){})}
+</script></body></html>
