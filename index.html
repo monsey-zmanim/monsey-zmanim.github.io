@@ -212,9 +212,9 @@ function renderMinyan(){
  host.innerHTML="";
  if(!n||!n.length)return;
  function nt(x){return x.note?" ("+esc(x.note)+")":""}
- function f(x){return '<span class="tn">'+hm(new Date(x.at))+'</span> <span class="tn">'+esc(x.loc)+'</span>'+nt(x)}
+ function f(x){return '<span class="tn">'+hm(new Date(x.at))+'</span> &middot; <span class="tn">'+esc(x.shul)+'</span> <span class="tn">('+esc(x.loc)+')</span>'+nt(x)}
  var first=n[0],rest=n.slice(1,2).map(f).join(" &middot; ");
- host.innerHTML='<b>Next minyan'+(first.tom?" tomorrow":"")+':</b> '+CATN[first.cat]+' &middot; '+f(first)+(multi()?' &middot; '+esc(first.shul):'')+(first.note==="Vasikin"?'<small>Brochos 30 min / Hodu 20 min before netz</small>':'')+(rest?'<small>then '+rest+'</small>':'');
+ host.innerHTML='<b>Next minyan'+(first.tom?" tomorrow":"")+':</b> '+CATN[first.cat]+' &middot; '+f(first)+(first.note==="Vasikin"?'<small>Brochos 30 min / Hodu 20 min before netz</small>':'')+(rest?'<small>then '+rest+'</small>':'');
 }
 function multi(){return SHULS.length>1}
 function load(){
@@ -284,11 +284,11 @@ function tefillos(){
   if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);list.push({n:"Mincha",at:mat,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
   if(S.e_ma&&T.sunset){var xat;
    if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW&&ZTOMORROW.t.chatzotNight)?ZTOMORROW.t.chatzotNight:null;if(CZ){var cz=new Date(adj(CZ,"d")).getTime(),lim=cz-10*60000,cand=[];xat=new Date(cz-S.o_ma*60000);
-    SHULS.forEach(function(sh){sh.list(T,dayStr).forEach(function(m){if((m.cat==="A"||m.cat==="MM")&&m.at<=lim)cand.push(m.at)})});
-    cand.sort(function(a,b){return a-b});var R0=xat.getTime(),ok=cand.filter(function(a){return a>=R0})[0];
-    if(ok!==undefined)xat=new Date(ok);else{var bf=cand.filter(function(a){return a<R0});if(bf.length)xat=new Date(bf[bf.length-1])}}}
+    SHULS.forEach(function(sh){sh.list(T,dayStr).forEach(function(m){if((m.cat==="A"||m.cat==="MM")&&m.at<=lim)cand.push({at:m.at,w:sh.name+" ("+m.loc+")"})})});
+    cand.sort(function(a,b){return a.at-b.at});var R0=xat.getTime(),ok=cand.filter(function(a){return a.at>=R0})[0],pk=null;
+    if(ok!==undefined){pk=ok;xat=new Date(ok.at)}else{var bf=cand.filter(function(a){return a.at<R0});if(bf.length){pk=bf[bf.length-1];xat=new Date(pk.at)}}}}
    else{var tz=adj(tzeisOf(T,dayStr),"u");xat=new Date(new Date(tz).getTime()+S.o_ma*60000)}
-   if(xat)list.push({n:"Maariv",at:xat,ws:T.plagHaMincha?new Date(adj(T.plagHaMincha,"d")).getTime():xat.getTime()-3*3600000})}
+   if(xat)list.push({n:"Maariv",at:xat,where:(typeof pk!=="undefined"&&pk)?pk.w:"",ws:T.plagHaMincha?new Date(adj(T.plagHaMincha,"d")).getTime():xat.getTime()-3*3600000})}
  }
  if(ZTD===today&&ZT)mk(ZT,today);
  else if(ZT&&ZTD===today){}
@@ -318,7 +318,7 @@ function renderLeave(){
  if(!best){box.innerHTML='<div class="lv">Nothing to leave for right now. Each reminder appears once its time window opens (mincha from mincha gedola, maariv from plag, shacharis a few hours before).</div>';return}
  var left=Math.round((best.lv-now)/60000),late=left<0;
  var tm=ymd(new Date(best.at))!==ymd(new Date())?" tomorrow":"";
- box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+'<br>'+tr.mi.toFixed(1)+' mi to '+esc(S.shul.name)+', ~'+tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
+ box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+(best.where?' &middot; '+esc(best.where):'')+'<br>'+tr.mi.toFixed(1)+' mi to '+esc(S.shul.name)+', ~'+tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
  var lc=box.querySelector(".leave");if(lc){lc.insertAdjacentHTML("beforeend",'<button id="dvb" style="margin-top:8px">I davened</button>');$("dvb").onclick=function(){disSet(disKey(best));renderLeave()}}
  checkNotify(list,lead);
 }
@@ -337,7 +337,7 @@ function checkNotify(list,lead){
   var key=disKey(x);
   if(!notified[key]&&!isDis(x)&&now>=x.lv&&now<x.at.getTime()){
    notified[key]=1;
-   var ttl="Time to leave for "+x.n,opt={body:x.n+" at "+hm(x.at)+". Leave now to get to "+S.shul.name+".",tag:key,renotify:false,data:{key:key},actions:[{action:"dav",title:"I davened"}]};
+   var ttl="Time to leave for "+x.n,opt={body:x.n+" at "+hm(x.at)+(x.where?" ("+x.where+")":"")+". Leave now to get to "+S.shul.name+".",tag:key,renotify:false,data:{key:key},actions:[{action:"dav",title:"I davened"}]};
    if("serviceWorker" in navigator&&navigator.serviceWorker.ready){navigator.serviceWorker.ready.then(function(r){return r.showNotification(ttl,opt)}).catch(function(){try{new Notification(ttl,{body:opt.body})}catch(e){}})}
    else{try{new Notification(ttl,{body:opt.body})}catch(e){}}
    try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
