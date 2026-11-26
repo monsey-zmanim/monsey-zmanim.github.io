@@ -330,12 +330,13 @@ function tefillos(){
  var today=ymd(new Date());
  function mk(T,dayStr){
   if(!T)return;var n0=list.length;try{mk2(T,dayStr)}finally{for(var q=n0;q<list.length;q++)list[q].dk=dayStr}}
+ function pickMn(T,dayStr,cats,Rt){var c=[];SHULS.forEach(function(sh){if(shExp(sh,dayStr))return;sh.list(T,dayStr).forEach(function(m){if(cats.indexOf(m.cat)>=0)c.push({at:m.at,w:sh.name+" ("+m.loc+")",sh:sh})})});c.sort(function(a,b){return a.at-b.at});var a=c.filter(function(x){return x.at>=Rt})[0];if(a)return a;var b=c.filter(function(x){return x.at<Rt});return b.length?b[b.length-1]:null}
  function mk2(T,dayStr){
   if(S.e_sh){var p=S.t_sh.split(":"),b=new Date(dayStr+"T"+S.t_sh+":00");/* local wall clock in NY: build via offset */var sa=nyDate(dayStr,p[0],p[1]);
    if(S.a_sh==="sz"&&T.sofZmanTfilla)sa=new Date(new Date(adj(opVal("tefilla",T,dayStr,"sofZmanTfilla"),"d")).getTime()-S.o_sh*60000);
    else if(S.a_sh==="ch"&&T.chatzot)sa=new Date(new Date(adj(T.chatzot,"d")).getTime()-S.o_sh*60000);
-   list.push({n:"Shacharis",at:sa,ws:sa.getTime()-4*3600000})}
-  if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);list.push({n:"Mincha",at:mat,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
+   var pkS=pickMn(T,dayStr,["S"],sa.getTime());list.push({n:"Shacharis",at:sa,where:pkS?pkS.w:"",sh:pkS?pkS.sh:null,ws:sa.getTime()-4*3600000})}
+  if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);var pkM=pickMn(T,dayStr,["M","MM"],mat.getTime());list.push({n:"Mincha",at:mat,where:pkM?pkM.w:"",sh:pkM?pkM.sh:null,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
   if(S.e_ma&&T.sunset){var xat;
    if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW)?chatzosHalaila(T,dayStr,ZTOMORROW.t):null;if(CZ){var cz=new Date(adj(CZ,"d")).getTime(),lim=cz-10*60000,cand=[];xat=new Date(cz-S.o_ma*60000);
     SHULS.forEach(function(sh){if(shExp(sh,dayStr))return;sh.list(T,dayStr).forEach(function(m){if((m.cat==="A"||m.cat==="MM")&&m.at<=lim)cand.push({at:m.at,w:sh.name+" ("+m.loc+")",sh:sh})})});
@@ -370,7 +371,7 @@ function renderLeave(){
  if(!best){box.innerHTML="";box.style.display="none";return}
  var left=Math.round((best.lv-now)/60000),late=left<0;
  var tm=ymd(new Date(best.at))!==ymd(new Date())?" tomorrow":"";
- box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+(best.where?' &middot; '+esc(best.where):'')+'<br>'+best.tr.mi.toFixed(1)+' mi to '+mapA(best.sh,esc(best.sh.name))+', ~'+best.tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
+ box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+' &middot; '+(best.where?mapA(best.sh,esc(best.where)):'no listed minyan near that time')+'<br>'+best.tr.mi.toFixed(1)+' mi to '+mapA(best.sh,esc(best.sh.name))+', ~'+best.tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
  var lc=box.querySelector(".leave");if(lc){lc.insertAdjacentHTML("beforeend",'<button id="dvb" style="margin-top:8px">I davened</button>');$("dvb").onclick=function(){disSet(disKey(best));renderLeave()}}
  checkNotify(list);
 }
