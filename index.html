@@ -269,9 +269,9 @@ function tefillos(){
  var today=ymd(new Date());
  function mk(T,dayStr){
   if(!T)return;
-  if(S.e_sh){var p=S.t_sh.split(":"),b=new Date(dayStr+"T"+S.t_sh+":00");/* local wall clock in NY: build via offset */list.push({n:"Shacharis",at:nyDate(dayStr,p[0],p[1])})}
-  if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");list.push({n:"Mincha",at:new Date(new Date(mb).getTime()-S.o_mi*60000)})}
-  if(S.e_ma&&T.sunset){var tz=adj(tzeisOf(T,dayStr),"u");list.push({n:"Maariv",at:new Date(new Date(tz).getTime()+S.o_ma*60000)})}
+  if(S.e_sh){var p=S.t_sh.split(":"),b=new Date(dayStr+"T"+S.t_sh+":00");/* local wall clock in NY: build via offset */var sa=nyDate(dayStr,p[0],p[1]);list.push({n:"Shacharis",at:sa,ws:sa.getTime()-4*3600000})}
+  if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);list.push({n:"Mincha",at:mat,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
+  if(S.e_ma&&T.sunset){var tz=adj(tzeisOf(T,dayStr),"u");var xat=new Date(new Date(tz).getTime()+S.o_ma*60000);list.push({n:"Maariv",at:xat,ws:T.plagHaMincha?new Date(adj(T.plagHaMincha,"d")).getTime():xat.getTime()-3*3600000})}
  }
  if(ZTD===today&&ZT)mk(ZT,today);
  else if(ZT&&ZTD===today){}
@@ -296,8 +296,8 @@ function renderLeave(){
  var tr=travelMin();
  if(!(S.e_sh||S.e_mi||S.e_ma)){box.innerHTML='<div class="lv">'+esc(S.shul.name)+': '+tr.mi.toFixed(1)+' mi, about '+tr.min+' min. Turn on a tefillah in Settings to get a leave-by time.</div>';return}
  var now=Date.now(),lead=tr.min+(+S.buf||0),best=null,list=tefillos();
- list.forEach(function(x){var lv=x.at.getTime()-lead*60000;x.lv=lv;if(x.at.getTime()>now&&(!best||x.at<best.at))best=x});
- if(!best){box.innerHTML='<div class="lv">No upcoming tefillah to show. Check Settings.</div>';return}
+ list.forEach(function(x){var lv=x.at.getTime()-lead*60000;x.lv=lv;if(x.at.getTime()>now&&now>=x.ws&&(!best||x.at<best.at))best=x});
+ if(!best){box.innerHTML='<div class="lv">Nothing to leave for right now. Each reminder appears once its time window opens (mincha from mincha gedola, maariv from plag, shacharis a few hours before).</div>';return}
  var left=Math.round((best.lv-now)/60000),late=left<0;
  var tm=ymd(new Date(best.at))!==ymd(new Date())?" tomorrow":"";
  box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+'<br>'+tr.mi.toFixed(1)+' mi to '+esc(S.shul.name)+', ~'+tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
