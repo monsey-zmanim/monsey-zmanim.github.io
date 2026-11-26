@@ -57,6 +57,7 @@ h1{margin:0;font-size:22px;text-align:center}
 .res div{padding:8px;border-bottom:1px solid #243a59;font-size:13px}
 .gear{float:right;background:#22344f;border:0;color:#eef2f7;border-radius:10px;padding:6px 10px;font-size:15px}
 #set label:has(select){display:flex;flex-wrap:wrap;align-items:center;gap:6px}#set select{max-width:100%}#w_t,#w_o{display:inline-flex;align-items:center;gap:6px}
+.zr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px}.zr select{font-size:13px;max-width:55%}
 </style></head><body><div class="w">
 <button class="gear" id="gear">Settings</button>
 <h1>My Zmanim</h1>
@@ -95,9 +96,7 @@ var ALL=[
  ["alos","Alos Hashachar","16.1\u00b0","alotHaShachar",1,"u"],
  ["misheyakir","Misheyakir","tallis & tefillin","misheyakir",1,"u"],
  ["netz","Netz Hachama","sunrise","sunrise",1,"u"],
- ["shemaMGA","Sof Zman Shema","MGA","sofZmanShmaMGA",0,"d"],
  ["shema","Sof Zman Shema","GRA","sofZmanShma",1,"d"],
- ["tefillaMGA","Sof Zman Tefillah","MGA","sofZmanTfillaMGA",0,"d"],
  ["tefilla","Sof Zman Tefillah","GRA","sofZmanTfilla",1,"d"],
  ["chatzos","Chatzos","midday","chatzot",1,"d"],
  ["mgedola","Mincha Gedola","","minchaGedola",1,"u"],
@@ -107,11 +106,14 @@ var ALL=[
  ["tzeis","Tzeis Hakochavim","","TZEIS",1,"u"],
  ["chatzosNight","Chatzos Halaila","","chatzotNight",0,"d"]
 ];
-var DEF={show:{},tz:"tzeit85deg",cl:15,hv:72,strict:true,shul:null,mode:"drive",buf:5,e_sh:false,t_sh:"07:00",e_mi:true,leave:true,o_mi:20,a_mi:"tz",e_ma:false,a_sh:"t",o_sh:30,a_ma:"tz",o_ma:0};
+var DEF={show:{},tz:"tzeit85deg",cl:15,hv:72,strict:true,shul:null,mode:"drive",buf:5,e_sh:false,t_sh:"07:00",e_mi:true,leave:true,o_mi:20,a_mi:"tz",op:{},e_ma:false,a_sh:"t",o_sh:30,a_ma:"tz",o_ma:0};
 ALL.forEach(function(z){DEF.show[z[0]]=!!z[4]});
 var S;
 try{S=JSON.parse(localStorage.getItem("zm_settings2")||"null")}catch(e){S=null}
 S=S||{};for(var k in DEF){if(S[k]===undefined)S[k]=JSON.parse(JSON.stringify(DEF[k]))}
+if(S.show.shemaMGA){if(!S.show.shema){S.show.shema=true;S.op=S.op||{};S.op.shema="k:sofZmanShmaMGA"}delete S.show.shemaMGA}
+if(S.show.tefillaMGA){if(!S.show.tefilla){S.show.tefilla=true;S.op=S.op||{};S.op.tefilla="k:sofZmanTfillaMGA"}delete S.show.tefillaMGA}
+S.op=S.op||{};
 for(var k2 in DEF.show){if(S.show[k2]===undefined)S.show[k2]=DEF.show[k2]}
 function save(){try{localStorage.setItem("zm_settings2",JSON.stringify(S))}catch(e){}}
 var $=function(i){return document.getElementById(i)};
@@ -131,7 +133,7 @@ function tzCode(kind,v){if(kind==="d"&&v===8.5)return"tzeit85deg";if(kind==="d"&
 function tzParse(c){if(c==="tzeit85deg")return{k:"d",v:8.5};if(c==="tzeit7083deg")return{k:"d",v:7.083};var m=/^([dm]):([\d.]+)$/.exec(c||"");return m?{k:m[1],v:parseFloat(m[2])}:{k:"d",v:8.5}}
 function tzOptions(){var h='<optgroup label="Degrees below horizon">';TZD.forEach(function(v){h+='<option value="'+tzCode("d",v)+'">'+v+'&deg; below horizon'+(v===8.5?" (default)":"")+'</option>'});h+='</optgroup><optgroup label="Minutes after shkia">';TZM.forEach(function(v){h+='<option value="'+tzCode("m",v)+'">'+v+' min after shkia</option>'});return h+'</optgroup>'}
 /* sun position (NOAA), geometric zenith, for degrees-below-horizon tzeis */
-function sunDegTime(dayStr,deg){
+function sunDegTime(dayStr,deg,morning){
  var y=+dayStr.slice(0,4),m=+dayStr.slice(5,7),d=+dayStr.slice(8,10),r=Math.PI/180;
  var jd=Date.UTC(y,m-1,d,12)/864e5+2440587.5,T=(jd-2451545)/36525;
  var L0=(280.46646+T*(36000.76983+T*0.0003032))%360,M=357.52911+T*(35999.05029-0.0001537*T),e=0.016708634-T*(0.000042037+0.0000001267*T);
@@ -142,7 +144,7 @@ function sunDegTime(dayStr,deg){
  var yy=Math.pow(Math.tan(ep*r/2),2),eq=4/r*(yy*Math.sin(2*L0*r)-2*e*Math.sin(M*r)+4*e*yy*Math.sin(M*r)*Math.cos(2*L0*r)-0.5*yy*yy*Math.sin(4*L0*r)-1.25*e*e*Math.sin(2*M*r));
  var ha=Math.acos(Math.cos((90+deg)*r)/(Math.cos(LAT*r)*Math.cos(dec))-Math.tan(LAT*r)*Math.tan(dec))/r;
  var noonMin=720-4*LON-eq;
- return new Date(Date.UTC(y,m-1,d)+ (noonMin+4*ha)*60000);
+ return new Date(Date.UTC(y,m-1,d)+ (noonMin+(morning?-4:4)*ha)*60000);
 }
 function tzeisOf(z,dayStr){
  if(is72(dayStr)){return new Date(new Date(z.sunset).getTime()+72*60000).toISOString()}
@@ -153,12 +155,34 @@ function tzeisOf(z,dayStr){
  return sunDegTime(dayStr,o.v).toISOString();
 }
 function tzeisLabel(dayStr){if(is72(dayStr))return YK[dayStr]?"72 min (Yom Kippur)":"72 min (Motzei Shabbos)";var o=tzParse(S.tz);return o.k==="m"?o.v+" min":o.v+"\u00b0"}
-function getVal(z,key,d){return key==="TZEIS"?tzeisOf(z,d):z[key]}
+var OPS={
+ alos:{def:"k:alotHaShachar",o:[["d:10.2","10.2\u00b0"],["d:11","11\u00b0"],["d:16.1","16.1\u00b0 (default)","k:alotHaShachar"],["d:18","18\u00b0"],["d:19.8","19.8\u00b0"],["m:60","60 min before sunrise"],["m:72","72 min before sunrise"],["m:90","90 min before sunrise"],["m:96","96 min before sunrise"],["m:120","120 min before sunrise"]]},
+ misheyakir:{def:"k:misheyakir",o:[["d:9.5","9.5\u00b0"],["k:misheyakirMachmir","10.2\u00b0"],["d:10.5","10.5\u00b0"],["d:11","11\u00b0"],["k:misheyakir","11.5\u00b0 (default)"],["d:12","12\u00b0"]]},
+ shema:{def:"k:sofZmanShma",o:[["k:sofZmanShma","GRA (default)"],["k:sofZmanShmaMGA","MGA 72 min"],["k:sofZmanShmaMGA16Point1","MGA 16.1\u00b0"],["k:sofZmanShmaMGA19Point8","MGA 19.8\u00b0"],["k:sofZmanShmaBaalHatanya","Baal HaTanya"]]},
+ tefilla:{def:"k:sofZmanTfilla",o:[["k:sofZmanTfilla","GRA (default)"],["k:sofZmanTfillaMGA","MGA 72 min"],["k:sofZmanTfillaMGA16Point1","MGA 16.1\u00b0"],["k:sofZmanTfillaMGA19Point8","MGA 19.8\u00b0"],["k:sofZmanTfilaBaalHatanya","Baal HaTanya"]]},
+ mgedola:{def:"k:minchaGedola",o:[["k:minchaGedola","GRA (default)"],["k:minchaGedolaMGA","MGA"],["k:minchaGedolaBaalHatanya","Baal HaTanya"]]},
+ mketana:{def:"k:minchaKetana",o:[["k:minchaKetana","GRA (default)"],["k:minchaKetanaMGA","MGA"],["k:minchaKetanaBaalHatanya","Baal HaTanya"]]},
+ plag:{def:"k:plagHaMincha",o:[["k:plagHaMincha","GRA (default)"],["k:plagHaminchaBaalHatanya","Baal HaTanya"]]},
+ chatzosNight:{def:"k:chatzotNight",o:[["k:chatzotNight","Solar midnight (default)"],["s:6","6 hr after shkia"]]}
+};
+function opCode(id){var c=(S.op&&S.op[id])||(OPS[id]&&OPS[id].def);return c}
+function opLabel(id){var o=OPS[id];if(!o)return null;var c=opCode(id),r=null;o.o.forEach(function(x){if(x[0]===c||x[2]===c)r=x[1].replace(" (default)","")});return r}
+function opVal(id,z,d,key){
+ var o=OPS[id],c=opCode(id);if(!o)return z[key];
+ var m=/^([kdms]):(.+)$/.exec(c)||[],t=m[1],v=m[2];
+ if(t==="k")return z[v]||z[key];
+ if(t==="d")return sunDegTime(d,parseFloat(v),true).toISOString();
+ if(t==="m")return new Date(new Date(z.sunrise).getTime()-parseFloat(v)*60000).toISOString();
+ if(t==="s")return new Date(new Date(z.sunset).getTime()+parseFloat(v)*3600000).toISOString();
+ return z[key];
+}
+function getVal(z,key,d,id){return key==="TZEIS"?tzeisOf(z,d):opVal(id,z,d,key)}
 function loc(){return S.shul?S.shul:{lat:LAT,lon:LON}}
 
 /* ---------- zmanim ---------- */
 var CDD="",CDI=[];
-function itemsFor(z,d,zn){var items=[];ALL.forEach(function(it){if(S.show[it[0]]){if(it[3]==="chatzotNight"){if(!zn)return;items.push([it[1],adj(zn.chatzotNight,it[5]),"tonight",it[0]]);return}var sub=it[2];if(it[3]==="TZEIS")sub=tzeisLabel(d);items.push([it[1],adj(getVal(z,it[3],d),it[5]),sub,it[0]])}});return items}
+function chatzosHalaila(z,d,zn){if(opCode("chatzosNight")==="s:6")return new Date(new Date(z.sunset).getTime()+6*3600000).toISOString();return zn?zn.chatzotNight:null}
+function itemsFor(z,d,zn){var items=[];ALL.forEach(function(it){if(S.show[it[0]]){if(it[3]==="chatzotNight"){var cn=chatzosHalaila(z,d,zn);if(!cn)return;items.push([it[1],adj(cn,it[5]),"tonight"+(S.op&&S.op.chatzosNight&&opLabel("chatzosNight")?" ("+opLabel("chatzosNight")+")":""),it[0]]);return}var sub=it[2];if(it[3]==="TZEIS")sub=tzeisLabel(d);else if(OPS[it[0]])sub=opLabel(it[0]);items.push([it[1],adj(getVal(z,it[3],d,it[0]),it[5]),sub,it[0]])}});return items}
 function pad(n){return n<10?"0"+n:""+n}
 function tickCd(){
  var rs=document.querySelectorAll(".r[data-ts]"),nxr=null,nw=Date.now(),ii;
@@ -215,11 +239,11 @@ function nextMinyan(){
  out.forEach(function(x){x.tom=c.t;x.shul=c.sh.name});
  return out;
 }
-function zt(id){var k={tefilla:["sofZmanTfilla","d"],tefillaMGA:["sofZmanTfillaMGA","d"],plag:["plagHaMincha","d"]}[id];if(!k||!ZT)return null;return new Date(adj(ZT[k[0]],k[1])).getTime()}
+function zt(id){var k={tefilla:["sofZmanTfilla","d"],plag:["plagHaMincha","d"]}[id];if(!k||!ZT)return null;return new Date(adj(getVal(ZT,k[0],ZTD,id),k[1])).getTime()}
 function pickAnchor(cat,now){
  var chain,x;
- if(cat==="S"){x=zt("tefilla")||zt("tefillaMGA");
-  chain=(x&&now<x)?["tefilla","tefillaMGA","shema","shemaMGA","netz","chatzos","mgedola"]:["chatzos","mgedola","tefilla","tefillaMGA","netz","shema"];}
+ if(cat==="S"){x=zt("tefilla");
+  chain=(x&&now<x)?["tefilla","shema","netz","chatzos","mgedola"]:["chatzos","mgedola","tefilla","netz","shema"];}
  else if(cat==="A"){chain=["tzeis","shkia","chatzosNight","plag"];}
  else{x=zt("plag");
   chain=(x&&now<x)?["plag","mketana","mgedola","shkia","chatzos"]:["shkia","plag","mketana","mgedola","tzeis"];}
@@ -301,12 +325,12 @@ function tefillos(){
   if(!T)return;var n0=list.length;try{mk2(T,dayStr)}finally{for(var q=n0;q<list.length;q++)list[q].dk=dayStr}}
  function mk2(T,dayStr){
   if(S.e_sh){var p=S.t_sh.split(":"),b=new Date(dayStr+"T"+S.t_sh+":00");/* local wall clock in NY: build via offset */var sa=nyDate(dayStr,p[0],p[1]);
-   if(S.a_sh==="sz"&&T.sofZmanTfilla)sa=new Date(new Date(adj(T.sofZmanTfilla,"d")).getTime()-S.o_sh*60000);
+   if(S.a_sh==="sz"&&T.sofZmanTfilla)sa=new Date(new Date(adj(opVal("tefilla",T,dayStr,"sofZmanTfilla"),"d")).getTime()-S.o_sh*60000);
    else if(S.a_sh==="ch"&&T.chatzot)sa=new Date(new Date(adj(T.chatzot,"d")).getTime()-S.o_sh*60000);
    list.push({n:"Shacharis",at:sa,ws:sa.getTime()-4*3600000})}
   if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);list.push({n:"Mincha",at:mat,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
   if(S.e_ma&&T.sunset){var xat;
-   if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW&&ZTOMORROW.t.chatzotNight)?ZTOMORROW.t.chatzotNight:null;if(CZ){var cz=new Date(adj(CZ,"d")).getTime(),lim=cz-10*60000,cand=[];xat=new Date(cz-S.o_ma*60000);
+   if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW)?chatzosHalaila(T,dayStr,ZTOMORROW.t):null;if(CZ){var cz=new Date(adj(CZ,"d")).getTime(),lim=cz-10*60000,cand=[];xat=new Date(cz-S.o_ma*60000);
     SHULS.forEach(function(sh){sh.list(T,dayStr).forEach(function(m){if((m.cat==="A"||m.cat==="MM")&&m.at<=lim)cand.push({at:m.at,w:sh.name+" ("+m.loc+")",sh:sh})})});
     cand.sort(function(a,b){return a.at-b.at});var R0=xat.getTime(),ok=cand.filter(function(a){return a.at>=R0})[0],pk=null;
     if(ok!==undefined){pk=ok;xat=new Date(ok.at)}else{var bf=cand.filter(function(a){return a.at<R0});if(bf.length){pk=bf[bf.length-1];xat=new Date(pk.at)}}}}
@@ -373,9 +397,11 @@ function startGeo(){
 
 /* ---------- settings UI ---------- */
 function buildSettings(){
- var h="";ALL.forEach(function(z){h+='<label><input type="checkbox" data-z="'+z[0]+'"'+(S.show[z[0]]?" checked":"")+'> '+z[1]+(z[2]?' ('+z[2]+')':'')+'</label>'});
+ var h="";ALL.forEach(function(z){var o=OPS[z[0]],sel="";if(o){sel='<select data-op="'+z[0]+'">'+o.o.map(function(x){return '<option value="'+(x[2]||x[0])+'">'+x[1]+'</option>'}).join("")+'</select>'}
+  h+='<div class="zr"><label><input type="checkbox" data-z="'+z[0]+'"'+(S.show[z[0]]?" checked":"")+'> '+z[1]+(o||z[3]==="TZEIS"?'':(z[2]?' ('+z[2]+')':''))+'</label>'+sel+'</div>'});
  $("zlist").innerHTML=h;
  Array.prototype.forEach.call(document.querySelectorAll("[data-z]"),function(c){c.onchange=function(){S.show[c.getAttribute("data-z")]=c.checked;save();load()}});
+ Array.prototype.forEach.call(document.querySelectorAll("[data-op]"),function(e){var id=e.getAttribute("data-op");e.value=opCode(id);e.onchange=function(){S.op=S.op||{};S.op[id]=this.value;save();load();renderLeave();renderMinyan()}});
  $("strict").checked=!!S.strict;$("strict").onchange=function(){S.strict=this.checked;save();load()};
  $("tz").innerHTML=tzOptions();$("tz").value=S.tz;if($("tz").value!==S.tz){$("tz").value=tzCode(tzParse(S.tz).k,tzParse(S.tz).v)}$("tz").onchange=function(){S.tz=this.value;save();load()};
  [["cl","cl"],["hv","hv"],["buf","buf"],["o_mi","o_mi"],["o_ma","o_ma"]].forEach(function(p){var e=$(p[0]);e.value=S[p[1]];e.onchange=function(){S[p[1]]=Math.max(0,parseInt(this.value,10)||0);save();load()}});
