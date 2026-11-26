@@ -335,8 +335,8 @@ function tefillos(){
   if(S.e_sh){var p=S.t_sh.split(":"),b=new Date(dayStr+"T"+S.t_sh+":00");/* local wall clock in NY: build via offset */var sa=nyDate(dayStr,p[0],p[1]);
    if(S.a_sh==="sz"&&T.sofZmanTfilla)sa=new Date(new Date(adj(opVal("tefilla",T,dayStr,"sofZmanTfilla"),"d")).getTime()-S.o_sh*60000);
    else if(S.a_sh==="ch"&&T.chatzot)sa=new Date(new Date(adj(T.chatzot,"d")).getTime()-S.o_sh*60000);
-   var pkS=pickMn(T,dayStr,["S"],sa.getTime());list.push({n:"Shacharis",at:sa,where:pkS?pkS.w:"",sh:pkS?pkS.sh:null,ws:sa.getTime()-4*3600000})}
-  if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);var pkM=pickMn(T,dayStr,["M","MM"],mat.getTime());list.push({n:"Mincha",at:mat,where:pkM?pkM.w:"",sh:pkM?pkM.sh:null,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
+   var pkS=pickMn(T,dayStr,["S"],sa.getTime());if(pkS)sa=new Date(pkS.at);list.push({n:"Shacharis",at:sa,where:pkS?pkS.w:"",sh:pkS?pkS.sh:null,ws:sa.getTime()-4*3600000})}
+  if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);var pkM=pickMn(T,dayStr,["M","MM"],mat.getTime());if(pkM)mat=new Date(pkM.at);list.push({n:"Mincha",at:mat,where:pkM?pkM.w:"",sh:pkM?pkM.sh:null,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
   if(S.e_ma&&T.sunset){var xat;
    if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW)?chatzosHalaila(T,dayStr,ZTOMORROW.t):null;if(CZ){var cz=new Date(adj(CZ,"d")).getTime(),lim=cz-10*60000,cand=[];xat=new Date(cz-S.o_ma*60000);
     SHULS.forEach(function(sh){if(shExp(sh,dayStr))return;sh.list(T,dayStr).forEach(function(m){if((m.cat==="A"||m.cat==="MM")&&m.at<=lim)cand.push({at:m.at,w:sh.name+" ("+m.loc+")",sh:sh})})});
