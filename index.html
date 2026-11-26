@@ -173,14 +173,27 @@ function minyanList(z,d){
  return L;
 }
 var MNKEY="";
+/* Add more shuls here: {id,name,lat,lon (optional, enables nearest-first),list:function(z,dayStr)->[{at,cat,loc,note}]} */
+var SHULS=[{id:"18f",name:"18 Forshay",lat:null,lon:null,list:minyanList}];
+function shulKm(sh){if(!pos||sh.lat==null||sh.lon==null)return null;return hav(pos.lat,pos.lon,sh.lat,sh.lon)}
 function nextMinyan(){
  var today=ymd(new Date());
  if(CDD!==today||!ZT||ZTD!==today)return null;
- var L=minyanList(ZT,today),now=Date.now(),idx=-1,i;
- for(i=0;i<L.length;i++)if(L[i].at>now){idx=i;break}
- var out;
- if(idx>=0)out=L.slice(idx,idx+3);
- else if(ZTOMORROW){var T=minyanList(ZTOMORROW.t,ZTOMORROW.d);out=T.slice(0,3);out.forEach(function(x){x.tom=1})}
+ var now=Date.now(),cands=[],tom=0;
+ SHULS.forEach(function(sh){
+  var L=sh.list(ZT,today),idx=-1,i;
+  for(i=0;i<L.length;i++)if(L[i].at>now){idx=i;break}
+  var out,t=0;
+  if(idx>=0)out=L.slice(idx);
+  else if(ZTOMORROW){out=sh.list(ZTOMORROW.t,ZTOMORROW.d);t=1}
+  if(out&&out.length)cands.push({sh:sh,L:out,t:t,km:shulKm(sh)});
+ });
+ if(!cands.length)return null;
+ var e=Math.min.apply(null,cands.map(function(c){return c.L[0].at})),cat=cands.filter(function(c){return c.L[0].at===e})[0].L[0].cat;
+ cands=cands.filter(function(c){return c.L[0].cat===cat&&c.L[0].at<=e+30*60000});
+ cands.sort(function(a,b){if(a.km!=null&&b.km!=null&&a.km!==b.km)return a.km-b.km;return a.L[0].at-b.L[0].at});
+ var c=cands[0],out=c.L.filter(function(x){return x.cat===cat}).slice(0,3);
+ out.forEach(function(x){x.tom=c.t;x.shul=c.sh.name});
  return out;
 }
 function zt(id){var k={tefilla:["sofZmanTfilla","d"],tefillaMGA:["sofZmanTfillaMGA","d"],plag:["plagHaMincha","d"]}[id];if(!k||!ZT)return null;return new Date(adj(ZT[k[0]],k[1])).getTime()}
@@ -195,19 +208,15 @@ function pickAnchor(cat,now){
  return "top";
 }
 function renderMinyan(){
- var els=document.querySelectorAll(".mn[data-a]"),i;
- var n=nextMinyan();
- for(i=0;i<els.length;i++)els[i].innerHTML="";
- $("mnTop").innerHTML="";
+ var host=$("mnTop"),n=nextMinyan();
+ host.innerHTML="";
  if(!n||!n.length)return;
- var a=pickAnchor(n[0].cat,Date.now()),host=a==="top"?$("mnTop"):document.querySelector('.mn[data-a="'+a+'"]');
- if(!host)host=$("mnTop");
  function nt(x){return x.note?" ("+esc(x.note)+")":""}
  function f(x){return '<span class="tn">'+hm(new Date(x.at))+'</span> <span class="tn">'+esc(x.loc)+'</span>'+nt(x)}
- var first=n[0],rest=n.slice(1).map(function(x){return '<span class="tn">'+hm(new Date(x.at))+'</span> <span class="tn">'+esc(x.loc)+'</span>'+nt(x)}).join(" &middot; ");
- host.innerHTML='<b>Next minyan'+(first.tom?" tomorrow":"")+':</b> '+CATN[first.cat]+' &middot; '+f(first)+(first.note==="Vasikin"?'<small>Brochos 30 min / Hodu 20 min before netz</small>':'')+(rest?'<small>then '+rest+'</small>':'');
-
+ var first=n[0],rest=n.slice(1,2).map(f).join(" &middot; ");
+ host.innerHTML='<b>Next minyan'+(first.tom?" tomorrow":"")+':</b> '+CATN[first.cat]+' &middot; '+f(first)+(multi()?' &middot; '+esc(first.shul):'')+(first.note==="Vasikin"?'<small>Brochos 30 min / Hodu 20 min before netz</small>':'')+(rest?'<small>then '+rest+'</small>':'');
 }
+function multi(){return SHULS.length>1}
 function load(){
  var d=ymd(cur),isToday=d===ymd(new Date());
  var out=$("out");out.innerHTML='<div class="err" style="color:#9fb0c7">Loading...</div>';
@@ -228,7 +237,7 @@ function load(){
   if(isToday)for(var i=0;i<items.length;i++){if(new Date(items[i][1]).getTime()>nowT){nextI=i;break}}
   var h='<div class="card">';
   if(!items.length)h+='<div class="err">No zmanim selected. Tap Settings.</div>';
-  items.forEach(function(it,i){h+=row(it[0],it[1],it[2]||"","",new Date(it[1]).getTime())+'<div class="mn" data-a="'+it[3]+'"></div>'});
+  items.forEach(function(it,i){h+=row(it[0],it[1],it[2]||"","",new Date(it[1]).getTime())});
   h+='</div>';
   var cl,hv,par;
   (s.items||[]).forEach(function(it){if(it.category==="candles")cl=it;if(it.category==="havdalah")hv=it;if(it.category==="parashat")par=it});
