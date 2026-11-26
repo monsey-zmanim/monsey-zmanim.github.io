@@ -285,8 +285,8 @@ function tefillos(){
   if(S.e_ma&&T.sunset){var xat;
    if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW&&ZTOMORROW.t.chatzotNight)?ZTOMORROW.t.chatzotNight:null;if(CZ){var cz=new Date(adj(CZ,"d")).getTime(),lim=cz-10*60000,cand=[];xat=new Date(cz-S.o_ma*60000);
     SHULS.forEach(function(sh){sh.list(T,dayStr).forEach(function(m){if((m.cat==="A"||m.cat==="MM")&&m.at<=lim)cand.push(m.at)})});
-    cand.sort(function(a,b){return a-b});var nw=Date.now(),nx=cand.filter(function(a){return a>nw})[0];
-    if(nx!==undefined)xat=new Date(nx);else if(cand.length)xat=new Date(cand[cand.length-1])}}
+    cand.sort(function(a,b){return a-b});var R0=xat.getTime(),ok=cand.filter(function(a){return a>=R0})[0];
+    if(ok!==undefined)xat=new Date(ok);else{var bf=cand.filter(function(a){return a<R0});if(bf.length)xat=new Date(bf[bf.length-1])}}}
    else{var tz=adj(tzeisOf(T,dayStr),"u");xat=new Date(new Date(tz).getTime()+S.o_ma*60000)}
    if(xat)list.push({n:"Maariv",at:xat,ws:T.plagHaMincha?new Date(adj(T.plagHaMincha,"d")).getTime():xat.getTime()-3*3600000})}
  }
