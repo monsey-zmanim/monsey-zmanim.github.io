@@ -80,7 +80,7 @@ h1{margin:0;font-size:22px;text-align:center}
  <label><input type="checkbox" id="leaveOn"> Show leave-by card &amp; reminders</label>
  <label><input type="checkbox" id="e_sh"> Shacharis at <input type="time" id="t_sh"></label>
  <label><input type="checkbox" id="e_mi"> Mincha <input type="number" id="o_mi" min="0" max="90"> min before <select id="a_mi"><option value="tz">tzeis</option><option value="sk">shkia</option></select></label>
- <label><input type="checkbox" id="e_ma"> Maariv <input type="number" id="o_ma" min="0" max="90"> min after tzeis</label>
+ <label><input type="checkbox" id="e_ma"> Maariv <input type="number" id="o_ma" min="0" max="90"> min <select id="a_ma"><option value="tz">after tzeis</option><option value="ch">before chatzos halaila</option></select></label>
  <div class="row"><button id="notif">Turn on notifications</button><span id="nstat" style="font-size:12px;color:#9fb0c7"></span></div>
  <div class="row" style="font-size:12px;color:#8ea2bd">Reminders only fire while this page is open on your phone. The leave-by time above always shows.</div>
 </div>
@@ -111,7 +111,7 @@ var ALL=[
  ["tzeis","Tzeis Hakochavim","","TZEIS",1,"u"],
  ["chatzosNight","Chatzos Halaila","","chatzotNight",0,"d"]
 ];
-var DEF={show:{},tz:"tzeit85deg",cl:15,hv:72,strict:true,shul:null,mode:"drive",buf:5,e_sh:false,t_sh:"07:00",e_mi:true,leave:true,o_mi:20,a_mi:"tz",e_ma:false,o_ma:0};
+var DEF={show:{},tz:"tzeit85deg",cl:15,hv:72,strict:true,shul:null,mode:"drive",buf:5,e_sh:false,t_sh:"07:00",e_mi:true,leave:true,o_mi:20,a_mi:"tz",e_ma:false,a_ma:"tz",o_ma:0};
 ALL.forEach(function(z){DEF.show[z[0]]=!!z[4]});
 var S;
 try{S=JSON.parse(localStorage.getItem("zm_settings2")||"null")}catch(e){S=null}
@@ -281,7 +281,10 @@ function tefillos(){
   if(!T)return;
   if(S.e_sh){var p=S.t_sh.split(":"),b=new Date(dayStr+"T"+S.t_sh+":00");/* local wall clock in NY: build via offset */var sa=nyDate(dayStr,p[0],p[1]);list.push({n:"Shacharis",at:sa,ws:sa.getTime()-4*3600000})}
   if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);list.push({n:"Mincha",at:mat,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
-  if(S.e_ma&&T.sunset){var tz=adj(tzeisOf(T,dayStr),"u");var xat=new Date(new Date(tz).getTime()+S.o_ma*60000);list.push({n:"Maariv",at:xat,ws:T.plagHaMincha?new Date(adj(T.plagHaMincha,"d")).getTime():xat.getTime()-3*3600000})}
+  if(S.e_ma&&T.sunset){var xat;
+   if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW&&ZTOMORROW.t.chatzotNight)?ZTOMORROW.t.chatzotNight:null;if(CZ)xat=new Date(new Date(adj(CZ,"d")).getTime()-S.o_ma*60000)}
+   else{var tz=adj(tzeisOf(T,dayStr),"u");xat=new Date(new Date(tz).getTime()+S.o_ma*60000)}
+   if(xat)list.push({n:"Maariv",at:xat,ws:T.plagHaMincha?new Date(adj(T.plagHaMincha,"d")).getTime():xat.getTime()-3*3600000})}
  }
  if(ZTD===today&&ZT)mk(ZT,today);
  else if(ZT&&ZTD===today){}
@@ -307,21 +310,32 @@ function renderLeave(){
  var tr=travelMin();
  if(!(S.e_sh||S.e_mi||S.e_ma)){box.innerHTML='<div class="lv">'+esc(S.shul.name)+': '+tr.mi.toFixed(1)+' mi, about '+tr.min+' min. Turn on a tefillah in Settings to get a leave-by time.</div>';return}
  var now=Date.now(),lead=tr.min+(+S.buf||0),best=null,list=tefillos();
- list.forEach(function(x){var lv=x.at.getTime()-lead*60000;x.lv=lv;if(x.at.getTime()>now&&now>=x.ws&&(!best||x.at<best.at))best=x});
+ list.forEach(function(x){var lv=x.at.getTime()-lead*60000;x.lv=lv;if(x.at.getTime()>now&&now>=x.ws&&!isDis(x)&&(!best||x.at<best.at))best=x});
  if(!best){box.innerHTML='<div class="lv">Nothing to leave for right now. Each reminder appears once its time window opens (mincha from mincha gedola, maariv from plag, shacharis a few hours before).</div>';return}
  var left=Math.round((best.lv-now)/60000),late=left<0;
  var tm=ymd(new Date(best.at))!==ymd(new Date())?" tomorrow":"";
  box.innerHTML='<div class="leave'+(late?' late':'')+'"><div class="lbl">'+(late?"You should have left for ":"Leave for ")+best.n+(tm)+' by</div><div class="big">'+hm(new Date(best.lv))+'</div><div class="det">'+(late?(-left)+' min ago':'in '+(left>=60?Math.floor(left/60)+' hr '+left%60+' min':left+' min'))+' &middot; '+best.n+' at '+hm(best.at)+'<br>'+tr.mi.toFixed(1)+' mi to '+esc(S.shul.name)+', ~'+tr.min+' min '+(S.mode==="walk"?"walk":"drive")+' + '+(+S.buf||0)+' min buffer</div></div>';
+ var lc=box.querySelector(".leave");if(lc){lc.insertAdjacentHTML("beforeend",'<button id="dvb" style="margin-top:8px">I davened</button>');$("dvb").onclick=function(){disSet(disKey(best));renderLeave()}}
  checkNotify(list,lead);
 }
+function disGet(){try{return JSON.parse(localStorage.getItem("zm_dis")||"{}")}catch(e){return{}}}
+function disKey(x){return x.n+"|"+x.at.toISOString()}
+function isDis(x){return !!disGet()[disKey(x)]}
+function disSet(k){var d=disGet(),n=Date.now();d[k]=n;for(var q in d)if(n-d[q]>2*864e5)delete d[q];try{localStorage.setItem("zm_dis",JSON.stringify(d))}catch(e){}}
+function disSync(){if(!window.caches)return;caches.open("zm-dis").then(function(c){return c.keys().then(function(ks){return Promise.all(ks.map(function(r){var k=new URL(r.url).searchParams.get("k");if(k)disSet(k);return c.delete(r)})).then(function(){if(ks.length)renderLeave()})})}).catch(function(){})}
+if("serviceWorker" in navigator){navigator.serviceWorker.addEventListener("message",function(e){if(e.data&&e.data.zmDismiss){disSet(e.data.key);renderLeave()}})}
+disSync();
+document.addEventListener("visibilitychange",function(){if(!document.hidden)disSync()});
 function checkNotify(list,lead){
  if(!("Notification" in window)||Notification.permission!=="granted")return;
  var now=Date.now();
  list.forEach(function(x){
   var key=x.n+"|"+x.at.toISOString();
-  if(!notified[key]&&now>=x.lv&&now<x.at.getTime()){
+  if(!notified[key]&&!isDis(x)&&now>=x.lv&&now<x.at.getTime()){
    notified[key]=1;
-   try{new Notification("Time to leave for "+x.n,{body:x.n+" at "+hm(x.at)+". Leave now to get to "+S.shul.name+"."});}catch(e){}
+   var ttl="Time to leave for "+x.n,opt={body:x.n+" at "+hm(x.at)+". Leave now to get to "+S.shul.name+".",tag:key,renotify:false,data:{key:key},actions:[{action:"dav",title:"I davened"}]};
+   if("serviceWorker" in navigator&&navigator.serviceWorker.ready){navigator.serviceWorker.ready.then(function(r){return r.showNotification(ttl,opt)}).catch(function(){try{new Notification(ttl,{body:opt.body})}catch(e){}})}
+   else{try{new Notification(ttl,{body:opt.body})}catch(e){}}
    try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
   }
  });
@@ -343,6 +357,7 @@ function buildSettings(){
  $("mode").value=S.mode;$("mode").onchange=function(){S.mode=this.value;save();renderLeave()};
  $("t_sh").value=S.t_sh;$("t_sh").onchange=function(){S.t_sh=this.value||"07:00";save();renderLeave()};
  var lo=$("leaveOn");lo.checked=S.leave!==false;lo.onchange=function(){S.leave=this.checked;save();renderLeave()};
+var ama=$("a_ma");ama.value=S.a_ma||"tz";ama.onchange=function(){S.a_ma=this.value;if(this.value==="ch"&&!S.o_ma)S.o_ma=30;if(this.value==="tz"&&S.o_ma===30)S.o_ma=0;save();$("o_ma").value=S.o_ma;load()};
 var am=$("a_mi");am.value=S.a_mi||"tz";am.onchange=function(){S.a_mi=this.value;save();renderLeave()};
 ["e_sh","e_mi","e_ma"].forEach(function(k){var e=$(k);e.checked=!!S[k];e.onchange=function(){S[k]=this.checked;save();renderLeave()}});
  showShul();nstat();
