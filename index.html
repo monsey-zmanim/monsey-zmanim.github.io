@@ -278,11 +278,15 @@ function tefillos(){
  var list=[];
  var today=ymd(new Date());
  function mk(T,dayStr){
-  if(!T)return;
+  if(!T)return;var n0=list.length;try{mk2(T,dayStr)}finally{for(var q=n0;q<list.length;q++)list[q].dk=dayStr}}
+ function mk2(T,dayStr){
   if(S.e_sh){var p=S.t_sh.split(":"),b=new Date(dayStr+"T"+S.t_sh+":00");/* local wall clock in NY: build via offset */var sa=nyDate(dayStr,p[0],p[1]);list.push({n:"Shacharis",at:sa,ws:sa.getTime()-4*3600000})}
   if(S.e_mi&&T.sunset){var mb=(S.a_mi==="sk")?adj(T.sunset,"d"):adj(tzeisOf(T,dayStr),"u");var mat=new Date(new Date(mb).getTime()-S.o_mi*60000);list.push({n:"Mincha",at:mat,ws:T.minchaGedola?new Date(adj(T.minchaGedola,"u")).getTime():mat.getTime()-4*3600000})}
   if(S.e_ma&&T.sunset){var xat;
-   if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW&&ZTOMORROW.t.chatzotNight)?ZTOMORROW.t.chatzotNight:null;if(CZ)xat=new Date(new Date(adj(CZ,"d")).getTime()-S.o_ma*60000)}
+   if(S.a_ma==="ch"){var CZ=(dayStr===today&&ZTOMORROW&&ZTOMORROW.t.chatzotNight)?ZTOMORROW.t.chatzotNight:null;if(CZ){var cz=new Date(adj(CZ,"d")).getTime(),lim=cz-10*60000,cand=[];xat=new Date(cz-S.o_ma*60000);
+    SHULS.forEach(function(sh){sh.list(T,dayStr).forEach(function(m){if((m.cat==="A"||m.cat==="MM")&&m.at<=lim)cand.push(m.at)})});
+    cand.sort(function(a,b){return a-b});var nw=Date.now(),nx=cand.filter(function(a){return a>nw})[0];
+    if(nx!==undefined)xat=new Date(nx);else if(cand.length)xat=new Date(cand[cand.length-1])}}
    else{var tz=adj(tzeisOf(T,dayStr),"u");xat=new Date(new Date(tz).getTime()+S.o_ma*60000)}
    if(xat)list.push({n:"Maariv",at:xat,ws:T.plagHaMincha?new Date(adj(T.plagHaMincha,"d")).getTime():xat.getTime()-3*3600000})}
  }
@@ -319,7 +323,7 @@ function renderLeave(){
  checkNotify(list,lead);
 }
 function disGet(){try{return JSON.parse(localStorage.getItem("zm_dis")||"{}")}catch(e){return{}}}
-function disKey(x){return x.n+"|"+x.at.toISOString()}
+function disKey(x){return x.n+"|"+(x.dk||x.at.toISOString())}
 function isDis(x){return !!disGet()[disKey(x)]}
 function disSet(k){var d=disGet(),n=Date.now();d[k]=n;for(var q in d)if(n-d[q]>2*864e5)delete d[q];try{localStorage.setItem("zm_dis",JSON.stringify(d))}catch(e){}}
 function disSync(){if(!window.caches)return;caches.open("zm-dis").then(function(c){return c.keys().then(function(ks){return Promise.all(ks.map(function(r){var k=new URL(r.url).searchParams.get("k");if(k)disSet(k);return c.delete(r)})).then(function(){if(ks.length)renderLeave()})})}).catch(function(){})}
@@ -330,7 +334,7 @@ function checkNotify(list,lead){
  if(!("Notification" in window)||Notification.permission!=="granted")return;
  var now=Date.now();
  list.forEach(function(x){
-  var key=x.n+"|"+x.at.toISOString();
+  var key=disKey(x);
   if(!notified[key]&&!isDis(x)&&now>=x.lv&&now<x.at.getTime()){
    notified[key]=1;
    var ttl="Time to leave for "+x.n,opt={body:x.n+" at "+hm(x.at)+". Leave now to get to "+S.shul.name+".",tag:key,renotify:false,data:{key:key},actions:[{action:"dav",title:"I davened"}]};
